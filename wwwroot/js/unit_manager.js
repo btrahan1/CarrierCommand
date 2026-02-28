@@ -42,7 +42,7 @@ window.UnitManager = {
         node.parent = null;
         node.position = worldPos;
 
-        const isVessel = id === 'vessel';
+        const isVessel = id.includes('vessel');
         const altitude = isVessel ? 0 : 7;
 
         let takeoffTarget = node.position.clone();
@@ -74,7 +74,7 @@ window.UnitManager = {
         Object.keys(this.units).forEach(id => {
             const unit = this.units[id];
             const node = unit.node;
-            const isVessel = id === 'vessel';
+            const isVessel = id.includes('vessel');
 
             if (unit.state === 'Circling') {
                 const radius = isVessel ? 45 : 25;

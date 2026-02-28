@@ -5,11 +5,11 @@
 <div class="launch-menu">
     <h3>Tactical Launch</h3>
     <div class="launch-buttons">
-        @foreach (var unitId in new[] { "apache", "f35", "vessel" })
+        @foreach (var unit in UnitStates)
         {
-            <button class="btn-launch @(IsUnitFlying(unitId) ? "flying" : "")" 
-                    @onclick="() => ToggleUnit(unitId)">
-                @(GetButtonText(unitId))
+            <button class="btn-launch @(IsUnitFlying(unit.Id) ? "flying" : "")" 
+                    @onclick="() => ToggleUnit(unit.Id)">
+                @(GetButtonText(unit.Id))
             </button>
         }
     </div>

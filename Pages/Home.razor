@@ -92,15 +92,27 @@
             var carrier = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/carrier.json", new double[] { 0, 0, 0 });
             await JSRuntime.InvokeVoidAsync("CarrierCommand.setCarrierRoot", carrier);
 
-            var apache = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/apache.json", new double[] { -1.5, 1.05, -3.0 });
-            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "apache", apache);
+            // 1. Apaches (Aft Deck) - 50% Scale
+            var apacheScale = new double[] { 0.5, 0.5, 0.5 };
+            var apache1 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/apache.json", new double[] { -1.5, 1.05, -5.0 }, new double[] { 0, 0, 0 }, apacheScale);
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "apache1", apache1);
             
-            var f35 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/f35.json", new double[] { 0.5, 1.05, 5.0 });
-            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "f35", f35);
+            var apache2 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/apache.json", new double[] { 1.5, 1.05, -6.5 }, new double[] { 0, 0, 0 }, apacheScale);
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "apache2", apache2);
+
+            // 2. F35s (Forward/Mid Deck)
+            var f35_1 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/f35.json", new double[] { 0.5, 1.05, 5.0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "f35_1", f35_1);
+
+            var f35_2 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/f35.json", new double[] { -2.5, 1.05, 2.0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "f35_2", f35_2);
             
-            var vessel = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/combat_vessel.json", new double[] { 8.0, 0, 2.0 }, new double[] { 0, 45, 0 });
-            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "vessel", vessel);
-            await JSRuntime.InvokeVoidAsync("CarrierCommand.setEscortRoot", vessel);
+            // 3. Combat Vessels (Water - Port & Starboard)
+            var vessel1 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/combat_vessel.json", new double[] { 15.0, 0, 5.0 }, new double[] { 0, 0, 0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "vessel1", vessel1);
+            
+            var vessel2 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/combat_vessel.json", new double[] { -15.0, 0, -5.0 }, new double[] { 0, 0, 0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "vessel2", vessel2);
 
             await JSRuntime.InvokeVoidAsync("CarrierCommand.initRadar", "radarUI");
 
