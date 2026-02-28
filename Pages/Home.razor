@@ -1,0 +1,126 @@
+﻿@page "/"
+@inject IJSRuntime JSRuntime
+
+<PageTitle>Carrier Command</PageTitle>
+
+<div class="game-container">
+    <canvas id="renderCanvas"></canvas>
+    
+    <div class="ui-overlay">
+        <div class="header-section">
+            <h1 class="game-title">Carrier Command</h1>
+            <p class="game-subtitle">Captain on the Bridge</p>
+        </div>
+        
+        <LaunchMenu UnitStates="unitStates" />
+
+        <RadarDisplay 
+            RadarSweepAngle="radarSweepAngle" 
+            CarrierHeading="carrierHeading" 
+            RadarBlips="radarBlips" />
+    </div>
+</div>
+
+<style>
+    .game-container {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        overflow: hidden;
+        background: #000;
+    }
+
+    #renderCanvas {
+        width: 100%;
+        height: 100%;
+        outline: none;
+    }
+
+    .ui-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        padding: 40px;
+        color: white;
+        text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
+        pointer-events: none;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .header-section {
+        margin-bottom: 20px;
+    }
+
+    .game-title {
+        font-size: 4rem;
+        margin: 0;
+        font-weight: 800;
+        letter-spacing: -2px;
+        text-transform: uppercase;
+        background: linear-gradient(180deg, #fff 0%, #aaa 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .game-subtitle {
+        font-size: 1.2rem;
+        margin: 0;
+        opacity: 0.8;
+        font-style: italic;
+    }
+</style>
+
+@code {
+    private double radarSweepAngle = 0;
+    private double carrierHeading = 0;
+    private List<RadarBlip> radarBlips = new();
+    private List<UnitStatus> unitStates = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.init", "renderCanvas");
+            
+            var carrier = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/carrier.json", new double[] { 0, 0, 0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.setCarrierRoot", carrier);
+
+            var apache = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/apache.json", new double[] { -1.5, 1.05, -3.0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "apache", apache);
+            
+            var f35 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/f35.json", new double[] { 0.5, 1.05, 5.0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "f35", f35);
+            
+            var vessel = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/combat_vessel.json", new double[] { 8.0, 0, 2.0 }, new double[] { 0, 45, 0 });
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "vessel", vessel);
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.setEscortRoot", vessel);
+
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.initRadar", "radarUI");
+
+            _ = RadarLoop();
+        }
+    }
+
+    private async Task RadarLoop()
+    {
+        while (true)
+        {
+            try {
+                var data = await JSRuntime.InvokeAsync<RadarData>("CarrierCommand.getRadarData");
+                radarSweepAngle = data.SweepAngle;
+                carrierHeading = data.Heading;
+                radarBlips = data.Enemies;
+                unitStates = data.Units;
+                StateHasChanged();
+            } catch { }
+            await Task.Delay(30);
+        }
+    }
+}

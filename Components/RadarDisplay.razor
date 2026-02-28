@@ -1,0 +1,114 @@
+
+@using CarrierCommand.Models
+
+<div id="radarUI" class="radar-display">
+    <div class="radar-scan" style="transform: rotate(@(RadarSweepAngle)rad)"></div>
+    <div class="radar-rings">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+    </div>
+    @foreach (var blip in RadarBlips)
+    {
+        <div class="radar-blip @(blip.IsSelected ? "selected" : "")" 
+             style="left: @(50 + blip.X * 50)%; top: @(50 + blip.Y * 50)%; opacity: @(blip.Opacity)"></div>
+    }
+    <div class="radar-center">
+        <div class="carrier-pointer" style="transform: translate(-50%, -100%) rotate(@(CarrierHeading)rad)"></div>
+    </div>
+</div>
+
+<style>
+    .radar-display {
+        position: absolute;
+        bottom: 40px;
+        right: 40px;
+        width: 200px;
+        height: 200px;
+        background: rgba(0, 40, 0, 0.3);
+        border-radius: 50%;
+        border: 2px solid #0f0;
+        overflow: hidden;
+        backdrop-filter: blur(4px);
+        pointer-events: auto;
+        cursor: crosshair;
+    }
+
+    .radar-scan {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 50%;
+        height: 50%;
+        background: linear-gradient(90deg, transparent 0%, rgba(0, 255, 0, 0.4) 100%);
+        transform-origin: bottom left;
+        border-left: 1px solid #0f0;
+    }
+
+    .radar-rings .ring {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        border: 1px solid rgba(0, 255, 0, 0.2);
+        border-radius: 50%;
+    }
+
+    .ring:nth-child(1) { width: 33%; height: 33%; }
+    .ring:nth-child(2) { width: 66%; height: 66%; }
+    .ring:nth-child(3) { width: 100%; height: 100%; }
+
+    .radar-center {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 6px;
+        height: 6px;
+        background: #fff;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 10px #fff;
+    }
+
+    .carrier-pointer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 0;
+        height: 0;
+        border-left: 5px solid transparent;
+        border-right: 5px solid transparent;
+        border-bottom: 15px solid #00aaff;
+        transform-origin: 50% 100%;
+        filter: drop-shadow(0 0 5px #00aaff);
+    }
+
+    .radar-blip {
+        position: absolute;
+        width: 6px;
+        height: 6px;
+        background: #f00;
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        box-shadow: 0 0 8px #f00;
+    }
+
+    .radar-blip.selected {
+        width: 10px;
+        height: 10px;
+        box-shadow: 0 0 12px #f00, 0 0 4px #fff;
+        animation: pulse-target 1s infinite alternate;
+        z-index: 10;
+    }
+
+    @@keyframes pulse-target {
+        from { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+        to { transform: translate(-50%, -50%) scale(1.5); opacity: 0.8; }
+    }
+</style>
+
+@code {
+    [Parameter] public double RadarSweepAngle { get; set; }
+    [Parameter] public double CarrierHeading { get; set; }
+    [Parameter] public List<RadarBlip> RadarBlips { get; set; } = new();
+}

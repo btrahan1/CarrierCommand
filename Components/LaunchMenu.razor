@@ -1,0 +1,100 @@
+
+@using CarrierCommand.Models
+@inject IJSRuntime JSRuntime
+
+<div class="launch-menu">
+    <h3>Tactical Launch</h3>
+    <div class="launch-buttons">
+        @foreach (var unitId in new[] { "apache", "f35", "vessel" })
+        {
+            <button class="btn-launch @(IsUnitFlying(unitId) ? "flying" : "")" 
+                    @onclick="() => ToggleUnit(unitId)">
+                @(GetButtonText(unitId))
+            </button>
+        }
+    </div>
+</div>
+
+<style>
+    .launch-menu {
+        pointer-events: auto;
+        background: rgba(0, 20, 40, 0.6);
+        padding: 20px;
+        border-radius: 8px;
+        border-left: 4px solid #00aaff;
+        width: fit-content;
+        backdrop-filter: blur(5px);
+    }
+
+    .launch-menu h3 {
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        margin-bottom: 15px;
+        color: #00aaff;
+        letter-spacing: 1px;
+    }
+
+    .launch-buttons {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .btn-launch {
+        background: rgba(255, 255, 255, 0.1);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px 20px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-align: left;
+        border-radius: 4px;
+    }
+
+    .btn-launch:hover {
+        background: #00aaff;
+        border-color: #00aaff;
+        transform: translateX(5px);
+    }
+
+    .btn-launch.flying {
+        border-color: #ff9900;
+        color: #ff9900;
+    }
+    .btn-launch.flying:hover {
+        background: #ff9900;
+        color: white;
+    }
+</style>
+
+@code {
+    [Parameter] public List<UnitStatus> UnitStates { get; set; } = new();
+
+    private bool IsUnitFlying(string id)
+    {
+        var unit = UnitStates.FirstOrDefault(u => u.Id == id);
+        return unit != null && unit.State != "OnDeck";
+    }
+
+    private string GetButtonText(string id)
+    {
+        var unit = UnitStates.FirstOrDefault(u => u.Id == id);
+        string name = id.ToUpper();
+        if (unit == null || unit.State == "OnDeck") return $"Launch {name}";
+        if (unit.State == "Returning") return $"Recovering {name}...";
+        return $"Return {name}";
+    }
+
+    private async Task ToggleUnit(string id)
+    {
+        if (IsUnitFlying(id))
+        {
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.returnUnitToBase", id);
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("CarrierCommand.launchUnit", id);
+        }
+    }
+}

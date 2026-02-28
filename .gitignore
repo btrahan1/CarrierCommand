@@ -1,0 +1,18 @@
+
+# Visual Studio / MSBuild
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Blazor / Web
+wwwroot/decode.js
+wwwroot/broker.js
+_framework/
+
+# OS
+.DS_Store
+Thumbs.db
