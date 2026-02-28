@@ -12,7 +12,15 @@
             <p class="game-subtitle">Captain on the Bridge</p>
         </div>
         
-        <LaunchMenu UnitStates="unitStates" />
+        <div class="tactical-controls">
+            <LaunchMenu UnitStates="unitStates" />
+            
+            <div class="defense-controls">
+                <button class="btn-engage @(isGunsEngaged ? "engaged" : "")" @onclick="ToggleGuns">
+                    @(isGunsEngaged ? "Guns Engaged" : "Engage Guns")
+                </button>
+            </div>
+        </div>
 
         <RadarDisplay 
             RadarSweepAngle="radarSweepAngle" 
@@ -75,6 +83,49 @@
         opacity: 0.8;
         font-style: italic;
     }
+
+    .tactical-controls {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        width: fit-content;
+    }
+
+    .defense-controls {
+        pointer-events: auto;
+    }
+
+    .btn-engage {
+        background: rgba(255, 50, 50, 0.2);
+        border: 2px solid #ff4444;
+        color: #ff4444;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 4px;
+        width: 100%;
+        backdrop-filter: blur(5px);
+    }
+
+    .btn-engage:hover {
+        background: rgba(255, 50, 50, 0.4);
+        box-shadow: 0 0 15px rgba(255, 68, 68, 0.5);
+    }
+
+    .btn-engage.engaged {
+        background: #ff4444;
+        color: white;
+        animation: pulse-red 1.5s infinite;
+    }
+
+    @@keyframes pulse-red {
+        0% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+        70% { box-shadow: 0 0 0 15px rgba(255, 68, 68, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+    }
 </style>
 
 @code {
@@ -82,6 +133,7 @@
     private double carrierHeading = 0;
     private List<RadarBlip> radarBlips = new();
     private List<UnitStatus> unitStates = new();
+    private bool isGunsEngaged = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -135,6 +187,12 @@
         }
     }
 
+    private async Task ToggleGuns()
+    {
+        isGunsEngaged = !isGunsEngaged;
+        await JSRuntime.InvokeVoidAsync("CarrierCommand.setGunsEngaged", isGunsEngaged);
+    }
+
     private async Task RadarLoop()
     {
         while (true)
@@ -145,6 +203,7 @@
                 carrierHeading = data.Heading;
                 radarBlips = data.Enemies;
                 unitStates = data.Units;
+                isGunsEngaged = data.IsGunsEngaged;
                 StateHasChanged();
             } catch { }
             await Task.Delay(30);

@@ -2,7 +2,8 @@
 window.DefenseSystem = {
     turrets: [],
     defenseRange: 150,
-    fireRate: 2000, // 2 seconds
+    fireRate: 3000,
+    isEngaged: false,
 
     registerTurret: function (node) {
         let pivot = null;
@@ -52,7 +53,7 @@ window.DefenseSystem = {
                 }
 
                 // Fire
-                if (now - t.lastFireTime > this.fireRate) {
+                if (this.isEngaged && now - t.lastFireTime > this.fireRate) {
                     t.lastFireTime = now;
                     this.fire(scene, t, targetPos, closestEnemy);
                 }
@@ -75,7 +76,7 @@ window.DefenseSystem = {
         setTimeout(() => ray.dispose(), 100);
 
         // Deal damage
-        enemy.hp -= 2; // Heavy guns deal more damage
+        enemy.hp -= 1; // 1 damage to match other units
         if (enemy.hp <= 0) {
             // Destruction logic is handled in UnitManager.updateUnits for now, 
             // but we should probably centralize it or ensure it's checked here too.

@@ -9,4 +9,5 @@ public class RadarData
     public double Heading { get; set; }
     public List<RadarBlip> Enemies { get; set; }
     public List<UnitStatus> Units { get; set; }
+    public bool IsGunsEngaged { get; set; }
 }

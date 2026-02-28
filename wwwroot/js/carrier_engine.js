@@ -126,6 +126,7 @@ window.CarrierCommand = {
             id: id,
             state: UnitManager.units[id].state
         }));
+        radarData.isGunsEngaged = DefenseSystem.isEngaged;
         return radarData;
     },
 
@@ -143,5 +144,9 @@ window.CarrierCommand = {
 
     returnUnitToBase: function (id) {
         UnitManager.returnUnitToBase(id);
+    },
+
+    setGunsEngaged: function (val) {
+        DefenseSystem.isEngaged = val;
     }
 };
