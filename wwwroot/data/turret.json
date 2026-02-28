@@ -1,0 +1,56 @@
+{
+    "Name": "HeavyTurret",
+    "Type": "Procedural",
+    "Parts": [
+        {
+            "Id": "turret_base",
+            "ParentId": null,
+            "Shape": "Cylinder",
+            "Position": [0, 0, 0],
+            "Rotation": [0, 0, 0],
+            "Scale": [1.5, 0.4, 1.5],
+            "ColorHex": "#455A64",
+            "Material": "Metal"
+        },
+        {
+            "Id": "turret_housing",
+            "ParentId": "turret_base",
+            "Shape": "Box",
+            "Position": [0, 0.4, 0],
+            "Rotation": [0, 0, 0],
+            "Scale": [1.2, 0.8, 1.4],
+            "ColorHex": "#546E7A",
+            "Material": "Metal"
+        },
+        {
+            "Id": "barrel_pivot",
+            "ParentId": "turret_housing",
+            "Shape": "Sphere",
+            "Position": [0, 0.2, 0.4],
+            "Rotation": [0, 0, 0],
+            "Scale": [0.4, 0.4, 0.4],
+            "ColorHex": "#263238",
+            "Material": "Metal"
+        },
+        {
+            "Id": "barrel_left",
+            "ParentId": "barrel_pivot",
+            "Shape": "Cylinder",
+            "Position": [-0.3, 0, 0.8],
+            "Rotation": [90, 0, 0],
+            "Scale": [0.15, 1.5, 0.15],
+            "ColorHex": "#212121",
+            "Material": "Metal"
+        },
+        {
+            "Id": "barrel_right",
+            "ParentId": "barrel_pivot",
+            "Shape": "Cylinder",
+            "Position": [0.3, 0, 0.8],
+            "Rotation": [90, 0, 0],
+            "Scale": [0.15, 1.5, 0.15],
+            "ColorHex": "#212121",
+            "Material": "Metal"
+        }
+    ]
+}

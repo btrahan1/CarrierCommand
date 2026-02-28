@@ -44,6 +44,14 @@ window.CarrierCommand = {
         escortRoot = node;
     },
 
+    setParent: function (child, parent) {
+        child.parent = parent;
+    },
+
+    registerTurret: function (node) {
+        DefenseSystem.registerTurret(node);
+    },
+
     initRadar: async function (uiId) {
         return RadarSystem.init(scene, uiId,
             (x, y, w, h) => this.handleRadarClick(x, y, w, h),
@@ -104,6 +112,9 @@ window.CarrierCommand = {
 
         // 2. Update Units
         UnitManager.updateUnits(scene, carrierRoot, RadarSystem.radarEnemies, RadarSystem.getSelectedEnemyId(), (id) => this.selectEnemy(id));
+
+        // 2.5 Update Defense System
+        DefenseSystem.update(scene, carrierRoot, RadarSystem.radarEnemies);
 
         // 3. Update Visibility
         RadarSystem.updateVisibility(carrierRoot);

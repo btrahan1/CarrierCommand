@@ -114,6 +114,21 @@
             var vessel2 = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/combat_vessel.json", new double[] { -15.0, 0, -5.0 }, new double[] { 0, 0, 0 });
             await JSRuntime.InvokeVoidAsync("CarrierCommand.registerUnit", "vessel2", vessel2);
 
+            // 4. Defense Turrets
+            var turretPositions = new[] {
+                new { id = "turret_bow", pos = new double[] { 0, 1.2, 8.5 }, rot = 0.0 },
+                new { id = "turret_starboard", pos = new double[] { -3.2, 1.05, 1.0 }, rot = 0.0 },
+                new { id = "turret_port", pos = new double[] { 3.2, 1.05, -1.0 }, rot = 180.0 },
+                new { id = "turret_aft", pos = new double[] { 0, 0.7, -9.2 }, rot = 180.0 }
+            };
+
+            foreach (var t in turretPositions)
+            {
+                var turret = await JSRuntime.InvokeAsync<IJSObjectReference>("CarrierCommand.loadModel", "data/turret.json", t.pos, new double[] { 0, t.rot, 0 });
+                await JSRuntime.InvokeVoidAsync("CarrierCommand.registerTurret", turret);
+                await JSRuntime.InvokeVoidAsync("CarrierCommand.setParent", turret, carrier);
+            }
+
             await JSRuntime.InvokeVoidAsync("CarrierCommand.initRadar", "radarUI");
 
             _ = RadarLoop();
