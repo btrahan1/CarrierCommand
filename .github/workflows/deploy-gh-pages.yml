@@ -1,0 +1,34 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-to-github-pages:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 9.0.x
+
+    - name: Publish application
+      run: dotnet publish CarrierCommand.csproj -c Release -o release --nologo
+
+    - name: Change base-tag in index.html from / to CarrierCommand
+      run: sed -i 's/<base href="\/" \/>/<base href="\/CarrierCommand\/" \/>/g' release/wwwroot/index.html
+
+    - name: Copy index.html to 404.html
+      run: cp release/wwwroot/index.html release/wwwroot/404.html
+
+    - name: Add .nojekyll file
+      run: touch release/wwwroot/.nojekyll
+
+    - name: Commit and Push to gh-pages branch
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        branch: gh-pages
+        folder: release/wwwroot
