@@ -1,0 +1,194 @@
+{
+"Name": "CVN78_CarrierCommand",
+"Type": "Procedural",
+"Parts": [
+{
+"Id": "hull_main",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0, 0.4, 0],
+"Rotation": [0, 0, 0],
+"Scale": [4.0, 1.2, 18.0],
+"ColorHex": "#546E7A",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "hull_bow_taper",
+"ParentId": null,
+"Shape": "Cone",
+"Position": [0, 0.4, 9.5],
+"Rotation": [90, 0, 0],
+"Scale": [4.0, 3.0, 1.2],
+"ColorHex": "#455A64",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "flight_deck_main",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0, 1.0, 0],
+"Rotation": [0, 0, 0],
+"Scale": [6.5, 0.1, 20.0],
+"ColorHex": "#212121",
+"Material": "Rubber",
+"Operation": "Union"
+},
+{
+"Id": "flight_deck_angled",
+"ParentId": null,
+"Shape": "Box",
+"Position": [2.2, 1.0, -1.5],
+"Rotation": [0, 10, 0],
+"Scale": [3.5, 0.1, 11.0],
+"ColorHex": "#212121",
+"Material": "Rubber",
+"Operation": "Union"
+},
+{
+"Id": "island_base",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-2.4, 1.6, -5.5],
+"Rotation": [0, 0, 0],
+"Scale": [0.6, 1.2, 1.4],
+"ColorHex": "#78909C",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "island_bridge",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-2.4, 2.3, -5.5],
+"Rotation": [0, 0, 0],
+"Scale": [0.7, 0.4, 1.0],
+"ColorHex": "#B0BEC5",
+"Material": "Glass",
+"Operation": "Union"
+},
+{
+"Id": "radar_mast",
+"ParentId": null,
+"Shape": "Cylinder",
+"Position": [-2.4, 2.9, -5.5],
+"Rotation": [0, 0, 0],
+"Scale": [0.05, 1.2, 0.05],
+"ColorHex": "#263238",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "radar_array_top",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-2.4, 3.4, -5.5],
+"Rotation": [0, 0, 0],
+"Scale": [0.5, 0.1, 0.2],
+"ColorHex": "#CFD8DC",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "elevator_starboard_1",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-3.4, 0.95, 2.0],
+"Rotation": [0, 0, 0],
+"Scale": [1.2, 0.05, 2.2],
+"ColorHex": "#546E7A",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "elevator_starboard_2",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-3.4, 0.95, -2.5],
+"Rotation": [0, 0, 0],
+"Scale": [1.2, 0.05, 2.2],
+"ColorHex": "#546E7A",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "catapult_track_1",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-0.8, 1.06, 6.0],
+"Rotation": [0, 0, 0],
+"Scale": [0.04, 0.01, 7.5],
+"ColorHex": "#B0BEC5",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "catapult_track_2",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0.6, 1.06, 6.0],
+"Rotation": [0, 0, 0],
+"Scale": [0.04, 0.01, 7.5],
+"ColorHex": "#B0BEC5",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "defense_phalanx_aft",
+"ParentId": null,
+"Shape": "Cylinder",
+"Position": [0, 0.7, -9.2],
+"Rotation": [0, 0, 0],
+"Scale": [0.2, 0.4, 0.2],
+"ColorHex": "#ECEFF1",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "deck_stripe_center",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0, 1.06, 0],
+"Rotation": [0, 0, 0],
+"Scale": [0.1, 0.01, 19.5],
+"ColorHex": "#FFEB3B",
+"Material": "Plastic",
+"Operation": "Union"
+},
+{
+"Id": "navigation_light_red",
+"ParentId": null,
+"Shape": "Sphere",
+"Position": [-2.7, 2.3, -5.0],
+"Rotation": [0, 0, 0],
+"Scale": [0.1, 0.1, 0.1],
+"ColorHex": "#F44336",
+"Material": "Glow",
+"Operation": "Union"
+}
+],
+"Timeline": [
+{
+"Time": 0.0,
+"Action": "Rotate",
+"TargetId": "radar_array_top",
+"Value": [0, 360, 0],
+"Duration": 4.0
+},
+{
+"Time": 1.0,
+"Action": "Move",
+"TargetId": "elevator_starboard_1",
+"Value": [-3.4, 0.4, 2.0],
+"Duration": 3.0
+},
+{
+"Time": 4.0,
+"Action": "Move",
+"TargetId": "elevator_starboard_1",
+"Value": [-3.4, 0.95, 2.0],
+"Duration": 3.0
+}
+]
+}

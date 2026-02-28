@@ -1,0 +1,183 @@
+{
+"Name": "F35_Lightning_CarrierVariant",
+"Type": "Procedural",
+"Parts": [
+{
+"Id": "fuselage_main",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0, 1.15, 0],
+"Rotation": [0, 0, 0],
+"Scale": [0.6, 0.35, 1.8],
+"ColorHex": "#455A64",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "nose_cone",
+"ParentId": null,
+"Shape": "Cone",
+"Position": [0, 1.15, 1.3],
+"Rotation": [90, 0, 0],
+"Scale": [0.6, 0.8, 0.35],
+"ColorHex": "#37474F",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "cockpit_canopy",
+"ParentId": null,
+"Shape": "Capsule",
+"Position": [0, 1.3, 0.6],
+"Rotation": [90, 0, 0],
+"Scale": [0.25, 0.5, 0.25],
+"ColorHex": "#263238",
+"Material": "Glass",
+"Operation": "Union"
+},
+{
+"Id": "wing_left",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0.75, 1.15, -0.2],
+"Rotation": [0, -25, 0],
+"Scale": [1.2, 0.04, 0.9],
+"ColorHex": "#546E7A",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "wing_right",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-0.75, 1.15, -0.2],
+"Rotation": [0, 25, 0],
+"Scale": [1.2, 0.04, 0.9],
+"ColorHex": "#546E7A",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "tail_stabilizer_left",
+"ParentId": null,
+"Shape": "Box",
+"Position": [0.35, 1.4, -0.8],
+"Rotation": [0, 15, 20],
+"Scale": [0.05, 0.6, 0.5],
+"ColorHex": "#455A64",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "tail_stabilizer_right",
+"ParentId": null,
+"Shape": "Box",
+"Position": [-0.35, 1.4, -0.8],
+"Rotation": [0, -15, -20],
+"Scale": [0.05, 0.6, 0.5],
+"ColorHex": "#455A64",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "engine_nozzle",
+"ParentId": null,
+"Shape": "Cylinder",
+"Position": [0, 1.15, -1.0],
+"Rotation": [90, 0, 0],
+"Scale": [0.4, 0.3, 0.4],
+"ColorHex": "#212121",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "afterburner_glow",
+"ParentId": null,
+"Shape": "Sphere",
+"Position": [0, 1.15, -1.1],
+"Rotation": [0, 0, 0],
+"Scale": [0.3, 0.3, 0.1],
+"ColorHex": "#FF7043",
+"Material": "Glow",
+"Operation": "Union"
+},
+{
+"Id": "landing_gear_front",
+"ParentId": null,
+"Shape": "Cylinder",
+"Position": [0, 1.05, 0.9],
+"Rotation": [0, 0, 0],
+"Scale": [0.05, 0.2, 0.05],
+"ColorHex": "#90A4AE",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "landing_gear_rear_l",
+"ParentId": null,
+"Shape": "Cylinder",
+"Position": [0.4, 1.05, -0.2],
+"Rotation": [0, 0, 0],
+"Scale": [0.05, 0.2, 0.05],
+"ColorHex": "#90A4AE",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "landing_gear_rear_r",
+"ParentId": null,
+"Shape": "Cylinder",
+"Position": [-0.4, 1.05, -0.2],
+"Rotation": [0, 0, 0],
+"Scale": [0.05, 0.2, 0.05],
+"ColorHex": "#90A4AE",
+"Material": "Metal",
+"Operation": "Union"
+},
+{
+"Id": "sidewinder_missile_l",
+"ParentId": null,
+"Shape": "Capsule",
+"Position": [1.1, 1.1, -0.1],
+"Rotation": [90, 0, 0],
+"Scale": [0.06, 0.5, 0.06],
+"ColorHex": "#ECEFF1",
+"Material": "Plastic",
+"Operation": "Union"
+},
+{
+"Id": "sidewinder_missile_r",
+"ParentId": null,
+"Shape": "Capsule",
+"Position": [-1.1, 1.1, -0.1],
+"Rotation": [90, 0, 0],
+"Scale": [0.06, 0.5, 0.06],
+"ColorHex": "#ECEFF1",
+"Material": "Plastic",
+"Operation": "Union"
+}
+],
+"Timeline": [
+{
+"Time": 0.0,
+"Action": "Scale",
+"TargetId": "afterburner_glow",
+"Value": [0.3, 0.3, 0.1],
+"Duration": 0.5
+},
+{
+"Time": 0.5,
+"Action": "Scale",
+"TargetId": "afterburner_glow",
+"Value": [0.35, 0.35, 0.2],
+"Duration": 0.5
+},
+{
+"Time": 0.0,
+"Action": "Color",
+"TargetId": "afterburner_glow",
+"Value": [1, 0.4, 0.1],
+"Duration": 0.2
+}
+]
+}
