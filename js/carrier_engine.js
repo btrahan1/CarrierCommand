@@ -1,16 +1,15 @@
-let carrierRoot, escortRoot;
+let water, carrierRoot, escortRoot;
 let carrierTarget = null;
 
 window.CarrierCommand = {
     init: function (canvasId) {
-        // The global variables engine, scene, camera, sun, shadowGenerator are declared above
-        // and will be assigned here from the return value of EngineCore.init
         const core = EngineCore.init(canvasId, () => this.updateMovement());
         engine = core.engine;
         scene = core.scene;
         camera = core.camera;
         sun = core.sun;
         shadowGenerator = core.shadowGenerator;
+        water = core.water;
 
         // Picking Listener
         scene.onPointerDown = (evt, pickResult) => {
@@ -29,8 +28,25 @@ window.CarrierCommand = {
         console.log("Carrier Command Orchestrator Initialized");
     },
 
+    // Helper to safely add meshes to the water reflection list
+    _addToWater: function (node) {
+        if (!water) return;
+
+        // Babylon.js WaterMaterial.renderList only accepts AbstractMesh objects.
+        // If we pass a TransformNode directly, it can crash the renderer.
+        if (node instanceof BABYLON.AbstractMesh) {
+            water.addToRenderList(node);
+        }
+
+        // Recursively add all child meshes
+        const meshes = node.getChildMeshes();
+        meshes.forEach(m => water.addToRenderList(m));
+    },
+
     loadModel: async function (url, position = [0, 0, 0], rotation = [0, 0, 0], scale = [1, 1, 1]) {
-        return ModelLoader.loadModel(scene, shadowGenerator, url, position, rotation, scale);
+        const node = await ModelLoader.loadModel(scene, shadowGenerator, url, position, rotation, scale);
+        this._addToWater(node);
+        return node;
     },
 
     setCarrierRoot: function (node) {
@@ -38,10 +54,12 @@ window.CarrierCommand = {
         if (camera) {
             camera.lockedTarget = carrierRoot;
         }
+        this._addToWater(node);
     },
 
     setEscortRoot: function (node) {
         escortRoot = node;
+        this._addToWater(node);
     },
 
     setParent: function (child, parent) {
@@ -50,6 +68,7 @@ window.CarrierCommand = {
 
     registerTurret: function (node) {
         DefenseSystem.registerTurret(node);
+        this._addToWater(node);
     },
 
     initRadar: async function (uiId) {
@@ -132,6 +151,7 @@ window.CarrierCommand = {
 
     registerUnit: function (id, node) {
         UnitManager.registerUnit(carrierRoot, id, node);
+        this._addToWater(node);
     },
 
     assignUnitToTarget: function (unitId, enemyId) {
