@@ -24,4 +24,8 @@ public class RadarData
     public double CarrierHp { get; set; }
     [JsonPropertyName("carrierMaxHp")]
     public double CarrierMaxHp { get; set; }
+    [JsonPropertyName("currentPhase")]
+    public string CurrentPhase { get; set; }
+    [JsonPropertyName("isWarping")]
+    public bool IsWarping { get; set; }
 }

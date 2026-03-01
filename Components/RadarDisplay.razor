@@ -10,7 +10,7 @@
     </div>
     @foreach (var blip in RadarBlips)
     {
-        <div class="radar-blip @(blip.IsSelected ? "selected" : "") @(blip.IsOffRadar ? "off-radar" : "")" 
+        <div class="radar-blip @(blip.IsSelected ? "selected" : "") @(blip.IsOffRadar ? "off-radar" : "") @(blip.IsBuilding ? "building" : "")" 
              style="left: @(50 + blip.X * 50)%; top: @(50 + blip.Y * 50)%; opacity: @(blip.Opacity)"></div>
     }
     <div class="radar-center">
@@ -108,6 +108,14 @@
         box-shadow: 0 0 5px #ffaa00;
         border-radius: 0; /* Square/Diamond look for edge pips */
         transform: translate(-50%, -50%) rotate(45deg);
+    }
+
+    .radar-blip.building {
+        width: 8px;
+        height: 8px;
+        background: #0f0;
+        border-radius: 2px;
+        box-shadow: 0 0 10px #0f0;
     }
 
     @@keyframes pulse-target {
