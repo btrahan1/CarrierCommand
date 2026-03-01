@@ -153,10 +153,12 @@ window.UnitManager = {
                         enemy.isDead = true;
                         this.crumble(scene, enemy);
 
-                        if (enemy.type === 'troop') {
+                        // Splice mobile enemies immediately to clear radar and trigger phase buttons
+                        if (enemy.type === 'vessel' || enemy.type === 'troop' || enemy.type === 'ship') {
                             const idx = radarEnemies.indexOf(enemy);
                             if (idx > -1) radarEnemies.splice(idx, 1);
                         }
+
                         if (selectedEnemyId === enemy.id) onEnemyDestroyed(null);
                     } else {
                         const hpPct = enemy.hp / enemy.maxHp;
@@ -250,6 +252,18 @@ window.UnitManager = {
                 if (now - s.lastFireTime > 1000) {
                     s.lastFireTime = now;
                     target.hp -= 0.5; // Small damage
+
+                    if (target.hp <= 0 && !target.isDead) {
+                        target.isDead = true;
+                        this.crumble(scene, target);
+
+                        // Splice mobile enemies but keep stationary for status pane
+                        if (target.type === 'vessel' || target.type === 'ship' || target.type === 'troop') {
+                            const idx = radarEnemies.indexOf(target);
+                            if (idx > -1) radarEnemies.splice(idx, 1);
+                        }
+                    }
+
                     const ray = BABYLON.MeshBuilder.CreateLines("seal_tracer", {
                         points: [s.node.position.clone(), target.node.position.clone()],
                         instance: null

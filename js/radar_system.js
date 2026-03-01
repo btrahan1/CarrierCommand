@@ -320,11 +320,14 @@ window.RadarSystem = {
             }
         });
 
+        const activeThreatCount = this.radarEnemies.filter(e => e.hp > 0 && !e.isDead).length;
+
         return {
             sweepAngle: this.radarSweepAngle,
             heading: carrierRoot.rotation.y,
             selectedId: selectedEnemyId,
             isWarping: window.SectorManager ? window.SectorManager.isWarping : false,
+            activeThreatCount: activeThreatCount,
             enemies: this.radarEnemies.filter(e => e.lastSeen > 0 || e.type === 'building' || e.type === 'tower').map(e => {
                 const relX = (e.x - cp.x) / this.radarRange;
                 const relZ = -(e.z - cp.z) / this.radarRange;

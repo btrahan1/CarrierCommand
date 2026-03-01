@@ -78,10 +78,16 @@ window.DefenseSystem = {
 
         // Deal damage
         enemy.hp -= 1;
-        if (enemy.hp <= 0) {
-            // Target destroyed, turret will reset in the next update loop
-            // as it won't be in the radarEnemies list anymore
-        } else {
+        if (enemy.hp <= 0 && !enemy.isDead) {
+            enemy.isDead = true;
+            if (window.UnitManager) window.UnitManager.crumble(scene, enemy);
+
+            // Splice mobile enemies to clear radar and trigger next phase
+            if (enemy.type === 'vessel' || enemy.type === 'ship' || enemy.type === 'troop') {
+                const idx = radarEnemies.indexOf(enemy);
+                if (idx > -1) radarEnemies.splice(idx, 1);
+            }
+        } else if (enemy.hp > 0) {
             const hpPct = enemy.hp / enemy.maxHp;
             enemy.healthBar.scaling.x = hpPct;
             enemy.healthBar.material.emissiveColor = new BABYLON.Color3(1 - hpPct, hpPct, 0);
