@@ -17,7 +17,10 @@ window.UnitManager = {
             startRot: node.rotation.clone(),
             state: 'OnDeck',
             targetId: null,
-            lastFireTime: 0
+            lastFireTime: 0,
+            hp: 25,
+            maxHp: 25,
+            lastRepairTime: 0
         };
     },
 
@@ -31,9 +34,14 @@ window.UnitManager = {
         console.log(`Unit ${unitId} scrambling for strike on target ${enemyId}`);
     },
 
-    launchUnit: function (carrierRoot, selectedEnemyId, id) {
-        const unit = this.units[id];
+    launchUnit: function (carrierRoot, targetId, unitId) {
+        const unit = this.units[unitId];
         if (!unit || unit.state !== 'OnDeck') return;
+
+        if (unit.hp < unit.maxHp) {
+            console.warn(`Unit ${unitId} is undergoing repairs (${unit.hp}/${unit.maxHp}) and cannot launch.`);
+            return;
+        }
 
         unit.state = 'Launching';
         const node = unit.node;
@@ -42,7 +50,7 @@ window.UnitManager = {
         node.parent = null;
         node.position = worldPos;
 
-        const isVessel = id.includes('vessel');
+        const isVessel = unitId.includes('vessel');
         const altitude = isVessel ? 0 : 7;
 
         let takeoffTarget = node.position.clone();
@@ -51,8 +59,8 @@ window.UnitManager = {
 
         BABYLON.Animation.CreateAndStartAnimation("takeoff", node, "position", 30, 60, node.position, takeoffTarget, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, null, () => {
             if (unit.state === 'Launching') {
-                if (selectedEnemyId !== null) {
-                    this.assignUnitToTarget(id, selectedEnemyId);
+                if (targetId !== null) {
+                    this.assignUnitToTarget(unitId, targetId);
                 } else {
                     unit.state = 'Circling';
                     unit.orbitAngle = Math.atan2(node.position.z - carrierRoot.position.z, node.position.x - carrierRoot.position.x);
@@ -69,13 +77,25 @@ window.UnitManager = {
         }
     },
 
-    updateUnits: function (scene, carrierRoot, radarEnemies, selectedEnemyId, selectEnemyCallback) {
+    updateUnits: function (scene, carrierRoot, radarEnemies, selectedEnemyId, onEnemyDestroyed) {
         const now = Date.now();
         Object.keys(this.units).forEach(id => {
             const unit = this.units[id];
             const node = unit.node;
-            const isVessel = id.includes('vessel');
 
+            if (unit.state === 'OnDeck') {
+                // Auto-Repair Logic: 1 HP per 3 seconds (3000ms)
+                if (unit.hp < unit.maxHp) {
+                    if (now - unit.lastRepairTime > 3000) {
+                        unit.hp = Math.min(unit.maxHp, unit.hp + 1);
+                        unit.lastRepairTime = now;
+                        console.log(`Unit ${id} repaired: ${unit.hp}/${unit.maxHp}`);
+                    }
+                }
+                return; // Skip further updates for units on deck
+            }
+
+            const isVessel = id.includes('vessel');
             const time = now * 0.001;
             // Boosted base height to 0.5 for high-swell clearance
             const bobbing = isVessel ? Math.sin(time * 0.7 + (id.charCodeAt(0) * 0.1)) * 0.15 + 0.5 : 0;
@@ -125,7 +145,7 @@ window.UnitManager = {
                         enemy.node.dispose();
                         const idx = radarEnemies.indexOf(enemy);
                         if (idx > -1) radarEnemies.splice(idx, 1);
-                        if (selectedEnemyId === enemy.id) selectEnemyCallback(null);
+                        if (selectedEnemyId === enemy.id) onEnemyDestroyed(null);
 
                         Object.values(this.units).forEach(u => {
                             if (u.targetId === enemy.id) {

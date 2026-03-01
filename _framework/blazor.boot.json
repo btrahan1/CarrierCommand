@@ -1,9 +1,9 @@
 {
   "mainAssemblyName": "CarrierCommand",
   "resources": {
-    "hash": "sha256-ltp99FymkD+uMrqmcTGgk7iv/ylfQ7HOiywsjgNrACU=",
+    "hash": "sha256-Qv7Qgvp5kfIlG5Ygetp82/atfoblsatBQZVSmim+uxE=",
     "fingerprinting": {
-      "Microsoft.AspNetCore.Components.227ts2x2kd.wasm": "Microsoft.AspNetCore.Components.wasm",
+      "Microsoft.AspNetCore.Components.jh6ff5yvap.wasm": "Microsoft.AspNetCore.Components.wasm",
       "Microsoft.AspNetCore.Components.Web.ernwvu0m86.wasm": "Microsoft.AspNetCore.Components.Web.wasm",
       "Microsoft.AspNetCore.Components.WebAssembly.aodfenoksx.wasm": "Microsoft.AspNetCore.Components.WebAssembly.wasm",
       "Microsoft.Extensions.Configuration.gyoce3loby.wasm": "Microsoft.Extensions.Configuration.wasm",
@@ -34,7 +34,7 @@
       "System.Text.Json.l00tha5spw.wasm": "System.Text.Json.wasm",
       "System.Text.RegularExpressions.vbr1gezq3a.wasm": "System.Text.RegularExpressions.wasm",
       "System.Private.CoreLib.27sj5jjak7.wasm": "System.Private.CoreLib.wasm",
-      "CarrierCommand.9ybu1zi1ut.wasm": "CarrierCommand.wasm",
+      "CarrierCommand.gb8wdshgmx.wasm": "CarrierCommand.wasm",
       "dotnet.js": "dotnet.js",
       "dotnet.native.xidrk0eo52.js": "dotnet.native.js",
       "dotnet.native.y68cfu4kuf.wasm": "dotnet.native.wasm",
@@ -62,7 +62,7 @@
       "System.Private.CoreLib.27sj5jjak7.wasm": "sha256-gunKlD3kpQzOmkwRH6yNVHfnkFsHzyDTiIg1BitJjag="
     },
     "assembly": {
-      "Microsoft.AspNetCore.Components.227ts2x2kd.wasm": "sha256-+jx9K5K3IVYPdC+QPRQziUycZx4bHpBFsvZmzpjiZN4=",
+      "Microsoft.AspNetCore.Components.jh6ff5yvap.wasm": "sha256-aa5XRhdckXSU919VFMPWHMy8NSYA3UHa9HCe5a8hTYI=",
       "Microsoft.AspNetCore.Components.Web.ernwvu0m86.wasm": "sha256-SncKJlw4imVkI1n4cLUxRUyDkUjCjj1ImQ1+y+x5TRY=",
       "Microsoft.AspNetCore.Components.WebAssembly.aodfenoksx.wasm": "sha256-+vw85FNE83ltsr8z9qcYuajeIV+ngYMuMZR5EfrBFz0=",
       "Microsoft.Extensions.Configuration.gyoce3loby.wasm": "sha256-WBOl1hVO85lznRaRi7gMrf7xcvFj8fjsVbCGfIDDIrU=",
@@ -91,7 +91,7 @@
       "System.Text.Encodings.Web.qyidcnqnsa.wasm": "sha256-QkmFquk4BHgFDVkCakoTzmLIV9UuzTDf4Fw62XFkzsA=",
       "System.Text.Json.l00tha5spw.wasm": "sha256-VQ5GY0NGHF1KpFppN37Xn1Efd5ZFbLwQbLoEusRf1CY=",
       "System.Text.RegularExpressions.vbr1gezq3a.wasm": "sha256-ZQejR0x7+S2JJA2Z1IkLWqWXukLRjL/c/zguib2fpHo=",
-      "CarrierCommand.9ybu1zi1ut.wasm": "sha256-//qcXs8bEJO1iys5FmgQqQ6LS46SbantsJeFkqgC+Ys="
+      "CarrierCommand.gb8wdshgmx.wasm": "sha256-HB+sX/i3I7RwQAnU/6HnOiOFJRDnQH98dFwnV1FOh7k="
     }
   },
   "cacheBootResources": true,

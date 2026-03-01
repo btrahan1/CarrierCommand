@@ -11,6 +11,10 @@ window.CarrierCommand = {
         shadowGenerator = core.shadowGenerator;
         water = core.water;
 
+        this.carrierHp = 25;
+        this.carrierMaxHp = 25;
+        this.lastCarrierRepairTime = 0;
+
         // Picking Listener
         scene.onPointerDown = (evt, pickResult) => {
             if (pickResult.hit && pickResult.pickedMesh && pickResult.pickedMesh.metadata) {
@@ -182,8 +186,20 @@ window.CarrierCommand = {
         // 2. Update Units
         UnitManager.updateUnits(scene, carrierRoot, RadarSystem.radarEnemies, RadarSystem.getSelectedEnemyId(), (id) => this.selectEnemy(id));
 
-        // 2.5 Update Defense System
+        // 2.5 Update Defense System (Player Auto-Turrets)
         DefenseSystem.update(scene, carrierRoot, RadarSystem.radarEnemies);
+
+        // 2.6 Update Enemy Combat (Counter-Attacks)
+        RadarSystem.updateEnemyCombat(scene, carrierRoot, escortRoot, UnitManager.units);
+
+        // 2.7 Carrier Auto-Repair (1 HP per 3 seconds)
+        if (this.carrierHp < this.carrierMaxHp && this.carrierHp > 0) {
+            if (now - this.lastCarrierRepairTime > 3000) {
+                this.carrierHp = Math.min(this.carrierMaxHp, this.carrierHp + 1);
+                this.lastCarrierRepairTime = now;
+                console.log(`Carrier repaired: ${this.carrierHp}/${this.carrierMaxHp}`);
+            }
+        }
 
         // 3. Update Visibility
         RadarSystem.updateVisibility(carrierRoot);
@@ -196,9 +212,13 @@ window.CarrierCommand = {
         const radarData = RadarSystem.getRadarData(carrierRoot);
         radarData.units = Object.keys(UnitManager.units).map(id => ({
             id: id,
-            state: UnitManager.units[id].state
+            state: UnitManager.units[id].state,
+            hp: UnitManager.units[id].hp,
+            maxHp: UnitManager.units[id].maxHp
         }));
         radarData.isGunsEngaged = DefenseSystem.isEngaged;
+        radarData.carrierHp = this.carrierHp;
+        radarData.carrierMaxHp = this.carrierMaxHp;
 
         // Pass the alert flag to UI and clear it
         radarData.isSectorNeutralized = SectorManager.justNeutralized;

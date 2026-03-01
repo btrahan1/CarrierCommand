@@ -75,6 +75,7 @@ window.RadarSystem = {
                 maxHp: 25,
                 healthBar: hb,
                 lastSeen: 0,
+                lastFireTime: 0,
                 id: i
             });
         }
@@ -95,6 +96,74 @@ window.RadarSystem = {
     },
 
     getSelectedEnemyId: function () { return selectedEnemyId; },
+
+    updateEnemyCombat: function (scene, carrierRoot, escortRoot, units) {
+        const now = Date.now();
+        const fireRange = 150;
+        const fireRate = 3000;
+
+        // Collect all potential friendly targets
+        const friendlies = [];
+        if (carrierRoot && window.CarrierCommand.carrierHp > 0) {
+            friendlies.push({ node: carrierRoot, type: 'carrier' });
+        }
+        if (escortRoot) {
+            friendlies.push({ node: escortRoot, type: 'escort' }); // Assuming escorts share carrier health or are invincible for now
+        }
+        Object.keys(units).forEach(id => {
+            const u = units[id];
+            if (u.state !== 'OnDeck' && u.hp > 0) {
+                friendlies.push({ node: u.node, type: 'unit', id: id, data: u });
+            }
+        });
+
+        this.radarEnemies.forEach(e => {
+            if (!e.node || !e.node.isEnabled() || e.hp <= 0) return;
+
+            let closestTarget = null;
+            let minDist = fireRange;
+
+            friendlies.forEach(f => {
+                const dist = BABYLON.Vector3.Distance(e.node.position, f.node.absolutePosition || f.node.position);
+                if (dist < minDist) {
+                    minDist = dist;
+                    closestTarget = f;
+                }
+            });
+
+            if (closestTarget && now - e.lastFireTime > fireRate) {
+                e.lastFireTime = now;
+                this._enemyFire(scene, e, closestTarget);
+            }
+        });
+    },
+
+    _enemyFire: function (scene, enemy, target) {
+        const origin = enemy.node.position.clone();
+        origin.y += 5; // Fire from top of enemy
+        const targetPos = (target.node.absolutePosition || target.node.position).clone();
+
+        const ray = BABYLON.MeshBuilder.CreateLines("enemy_tracer", {
+            points: [origin, targetPos],
+            instance: null
+        }, scene);
+        ray.color = new BABYLON.Color3(1, 0.5, 0); // Orange tracers for enemies
+        setTimeout(() => ray.dispose(), 100);
+
+        // Apply Damage
+        if (target.type === 'unit') {
+            target.data.hp -= 1;
+            console.log(`Unit ${target.id} hit! HP: ${target.data.hp}`);
+            if (target.data.hp <= 0) {
+                console.warn(`Unit ${target.id} destroyed!`);
+                // UnitManager could handle destruction, but for now we just keep it at 0 hp
+                // and it will stop being a target above.
+            }
+        } else if (target.type === 'carrier') {
+            window.CarrierCommand.carrierHp -= 1;
+            console.log(`Carrier hit! HP: ${window.CarrierCommand.carrierHp}`);
+        }
+    },
 
     updateVisibility: function (carrierRoot) {
         const time = Date.now() * 0.001;
