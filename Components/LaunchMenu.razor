@@ -7,10 +7,22 @@
     <div class="launch-buttons">
         @foreach (var unit in UnitStates)
         {
-            <button class="btn-launch @(IsUnitFlying(unit.Id) ? "flying" : "")" 
-                    @onclick="() => ToggleUnit(unit.Id)">
-                @(GetButtonText(unit.Id))
-            </button>
+            var isDamaged = unit.State == "OnDeck" && unit.Hp < unit.MaxHp;
+            <div class="unit-control">
+                <button class="btn-launch @(IsUnitFlying(unit.Id) ? "flying" : "")" 
+                        @onclick="() => ToggleUnit(unit.Id)"
+                        disabled="@isDamaged">
+                    @(GetButtonText(unit))
+                </button>
+                <div class="hp-gauge">
+                    <div class="hp-fill @(unit.Hp < 10 ? "critical" : "")" 
+                         style="width: @( (unit.Hp / unit.MaxHp) * 100 )%"></div>
+                </div>
+                @if (isDamaged)
+                {
+                    <span class="repair-tag">REPAIRING...</span>
+                }
+            </div>
         }
     </div>
 </div>
@@ -66,6 +78,47 @@
         background: #ff9900;
         color: white;
     }
+
+    .btn-launch:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: rgba(255, 0, 0, 0.1);
+    }
+
+    .unit-control {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+        margin-bottom: 15px;
+    }
+
+    .hp-gauge {
+        height: 3px;
+        background: rgba(255,255,255,0.1);
+        width: 100%;
+        border-radius: 2px;
+        overflow: hidden;
+    }
+
+    .hp-fill {
+        height: 100%;
+        background: #00ff88;
+        box-shadow: 0 0 5px #00ff88;
+        transition: width 0.3s ease;
+    }
+
+    .hp-fill.critical {
+        background: #ff4400;
+        box-shadow: 0 0 5px #ff4400;
+    }
+
+    .repair-tag {
+        font-size: 0.6rem;
+        color: #ffcc00;
+        letter-spacing: 2px;
+        font-weight: bold;
+        animation: blink 1s infinite;
+    }
 </style>
 
 @code {
@@ -77,11 +130,13 @@
         return unit != null && unit.State != "OnDeck";
     }
 
-    private string GetButtonText(string id)
+    private string GetButtonText(UnitStatus unit)
     {
-        var unit = UnitStates.FirstOrDefault(u => u.Id == id);
-        string name = id.ToUpper();
-        if (unit == null || unit.State == "OnDeck") return $"Launch {name}";
+        string name = unit.Id.ToUpper();
+        if (unit.State == "OnDeck") {
+            if (unit.Hp < unit.MaxHp) return $"REPAIRING {name}";
+            return $"Launch {name}";
+        }
         if (unit.State == "Returning") return $"Recovering {name}...";
         return $"Return {name}";
     }

@@ -11,6 +11,14 @@
             <h1 class="game-title">Carrier Command</h1>
             <p class="game-subtitle">Captain on the Bridge</p>
         </div>
+        <div class="carrier-status">
+            <div class="status-label">CARRIER HULL INTEGRITY</div>
+            <div class="hp-gauge large">
+                <div class="hp-fill @(carrierHp < 10 ? "critical" : "")" 
+                     style="width: @( (carrierHp / carrierMaxHp) * 100 )%"></div>
+            </div>
+            <div class="hp-values">@carrierHp / @carrierMaxHp HP</div>
+        </div>
         <div class="tactical-controls">
             <LaunchMenu UnitStates="unitStates" />
             
@@ -73,6 +81,40 @@
         width: 100%;
         height: 100%;
         outline: none;
+    }
+
+    .carrier-status {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        width: 300px;
+        background: rgba(0, 20, 40, 0.6);
+        padding: 15px;
+        border-radius: 8px;
+        border-right: 4px solid #00aaff;
+        backdrop-filter: blur(5px);
+        pointer-events: none;
+    }
+
+    .status-label {
+        font-size: 0.7rem;
+        color: #00aaff;
+        letter-spacing: 2px;
+        margin-bottom: 8px;
+    }
+
+    .hp-gauge.large {
+        height: 8px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 4px;
+        margin-bottom: 5px;
+    }
+
+    .hp-values {
+        font-size: 0.8rem;
+        text-align: right;
+        color: white;
+        opacity: 0.8;
     }
 
     .ui-overlay {
@@ -289,6 +331,8 @@
     private SectorStatus sectorStatus = new();
     private double warpTimeRemaining = 0;
     private string targetSectorName = "";
+    private double carrierHp = 25;
+    private double carrierMaxHp = 25;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -361,6 +405,8 @@
                 isGunsEngaged = data.IsGunsEngaged;
                 warpTimeRemaining = data.WarpTimeRemaining;
                 targetSectorName = data.TargetSectorName;
+                carrierHp = data.CarrierHp;
+                carrierMaxHp = data.CarrierMaxHp;
 
                 if (data.IsSectorNeutralized) {
                     showNeutralizedAlert = true;

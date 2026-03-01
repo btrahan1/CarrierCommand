@@ -20,4 +20,8 @@ public class RadarData
     public double WarpTimeRemaining { get; set; }
     [JsonPropertyName("targetSectorName")]
     public string TargetSectorName { get; set; }
+    [JsonPropertyName("carrierHp")]
+    public double CarrierHp { get; set; }
+    [JsonPropertyName("carrierMaxHp")]
+    public double CarrierMaxHp { get; set; }
 }
