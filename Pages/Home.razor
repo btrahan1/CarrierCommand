@@ -24,11 +24,11 @@
             PHASE: <span class="phase-value">@currentPhase.ToUpper()</span>
         </div>
 
-        @if (currentPhase == "Naval" && unitStates.Count > 0 && radarEnemiesCount == 0 && !isWarping)
+        @if (currentPhase == "Naval" && unitStates.Count > 0 && activeThreatCount == 0 && !isWarping)
         {
             <button class="btn-assault" @onclick="AssaultBase">ASSAULT BASE</button>
         }
-        else if (currentPhase == "Assault" && radarEnemiesCount == 0)
+        else if (currentPhase == "Assault" && activeThreatCount == 0)
         {
             <button class="btn-missile" @onclick="LaunchMissile">LAUNCH CRUISE MISSILE</button>
         }
@@ -410,6 +410,7 @@
     private double carrierMaxHp = 25;
     private string currentPhase = "Naval";
     private int radarEnemiesCount = 0;
+    private int activeThreatCount = 0;
     private bool isWarping = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -487,6 +488,7 @@
                 carrierMaxHp = data.CarrierMaxHp;
                 currentPhase = data.CurrentPhase ?? "Naval";
                 radarEnemiesCount = data.Enemies?.Count ?? 0;
+                activeThreatCount = data.ActiveThreatCount;
                 isWarping = data.IsWarping;
 
                 if (data.IsSectorNeutralized) {

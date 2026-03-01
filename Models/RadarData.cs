@@ -28,4 +28,6 @@ public class RadarData
     public string CurrentPhase { get; set; }
     [JsonPropertyName("isWarping")]
     public bool IsWarping { get; set; }
+    [JsonPropertyName("activeThreatCount")]
+    public int ActiveThreatCount { get; set; }
 }

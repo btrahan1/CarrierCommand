@@ -1,0 +1,110 @@
+@using CarrierCommand.Models
+
+<div class="combat-status-pane">
+    <div class="pane-header">SECTOR OBJECTIVES</div>
+    <div class="enemy-list">
+        @foreach (var enemy in Enemies.OrderBy(e => e.IsBuilding ? 0 : 1))
+        {
+            <div class="enemy-item @(enemy.Hp <= 0 ? "destroyed" : "")">
+                <div class="enemy-info">
+                    <span class="enemy-type">@enemy.Type.ToUpper()</span>
+                    @if (enemy.Hp <= 0)
+                    {
+                        <span class="status-badge">DESTROYED</span>
+                    }
+                    else
+                    {
+                        <div class="mini-hp-bar">
+                            <div class="hp-fill" style="width: @( (enemy.Hp / enemy.MaxHp) * 100 )%"></div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .combat-status-pane {
+        position: absolute;
+        top: 150px;
+        right: 40px;
+        width: 280px;
+        background: rgba(0, 20, 40, 0.7);
+        border: 1px solid rgba(0, 170, 255, 0.3);
+        border-radius: 4px;
+        padding: 15px;
+        color: white;
+        pointer-events: auto;
+        backdrop-filter: blur(5px);
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .pane-header {
+        font-size: 0.9rem;
+        letter-spacing: 2px;
+        opacity: 0.7;
+        margin-bottom: 15px;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+        padding-bottom: 5px;
+    }
+
+    .enemy-list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .enemy-item {
+        background: rgba(255,255,255,0.05);
+        padding: 8px 12px;
+        border-radius: 3px;
+        transition: all 0.3s ease;
+    }
+
+    .enemy-item.destroyed {
+        opacity: 0.5;
+        background: rgba(255, 50, 50, 0.1);
+        border-left: 3px solid #ff4444;
+    }
+
+    .enemy-info {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+    }
+
+    .enemy-type {
+        font-weight: bold;
+        font-size: 0.85rem;
+    }
+
+    .status-badge {
+        color: #ff4444;
+        font-size: 0.75rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+    }
+
+    .mini-hp-bar {
+        width: 100px;
+        height: 6px;
+        background: rgba(0,0,0,0.5);
+        border-radius: 3px;
+        overflow: hidden;
+    }
+
+    .hp-fill {
+        height: 100%;
+        background: #00ff88;
+        box-shadow: 0 0 10px rgba(0,255,136,0.5);
+    }
+</style>
+
+@code {
+    [Parameter]
+    public List<RadarBlip> Enemies { get; set; } = new();
+}
