@@ -11,9 +11,10 @@ window.CarrierCommand = {
         shadowGenerator = core.shadowGenerator;
         water = core.water;
 
-        this.carrierHp = 25;
-        this.carrierMaxHp = 25;
+        this.carrierHp = 100;
+        this.carrierMaxHp = 100;
         this.lastCarrierRepairTime = 0;
+        this.isScrambleTriggered = false;
 
         // Picking Listener
         scene.onPointerDown = (evt, pickResult) => {
@@ -35,7 +36,7 @@ window.CarrierCommand = {
         const startSector = SectorManager.sectors.find(s => s.id === SectorManager.currentSectorId);
         if (startSector) {
             this.initRadar("radarUI").then(() => {
-                RadarSystem.spawnSectorEnemies(startSector.difficulty);
+                RadarSystem.spawnEnemy(scene, startSector.difficulty);
             });
         }
 
@@ -66,7 +67,7 @@ window.CarrierCommand = {
             await new Promise(resolve => setTimeout(resolve, 10000));
 
             // 6. Spawn new hostiles
-            await RadarSystem.spawnSectorEnemies(sector.difficulty);
+            await RadarSystem.spawnEnemy(scene, sector.difficulty);
 
             // 7. Signal Warp Complete
             SectorManager.setWarpComplete();
@@ -156,28 +157,50 @@ window.CarrierCommand = {
 
     updateMovement: function () {
         if (!carrierRoot) return;
+        const now = Date.now();
+
+        // 0. Update Camera Focus
+        if (SectorManager.currentPhase === 'Assault') {
+            const base = RadarSystem.radarEnemies.find(e => e.id === 'base_center');
+            if (base && base.node) {
+                camera.setTarget(base.node.absolutePosition || base.node.position);
+            }
+        } else {
+            camera.setTarget(carrierRoot.position);
+        }
 
         // 1. Move Carrier
         if (carrierTarget) {
+            // Ensure we can use .rotation.y
+            if (carrierRoot.rotationQuaternion) carrierRoot.rotationQuaternion = null;
+
             const dir = carrierTarget.subtract(carrierRoot.position);
             dir.y = 0;
             const dist = dir.length();
 
-            if (dist > 2.0) {
+            if (dist > 15.0) { // Large deadzone for the big ship
                 dir.normalize();
                 const targetRot = Math.atan2(dir.x, dir.z);
                 let diff = targetRot - carrierRoot.rotation.y;
                 while (diff < -Math.PI) diff += Math.PI * 2;
                 while (diff > Math.PI) diff -= Math.PI * 2;
-                carrierRoot.rotation.y += diff * 0.01;
-                carrierRoot.position.addInPlace(carrierRoot.forward.scale(0.1));
+
+                // Stronger turn rate (10% per frame) to follow clicks better
+                carrierRoot.rotation.y += diff * 0.1;
+
+                // Only move forward if we are facing the target
+                if (Math.abs(diff) < Math.PI / 4) {
+                    // Smoothly slow down as we approach (min speed 0.1)
+                    const speed = Math.max(0.1, Math.min(0.4, dist / 100));
+                    carrierRoot.position.addInPlace(carrierRoot.forward.scale(speed));
+                }
             } else {
                 carrierTarget = null;
+                console.log("Navigation Goal Reached.");
             }
         }
 
-        // Apply Buoyancy/Bobbing to Carrier
-        const time = Date.now() * 0.001;
+        const time = now * 0.001;
         // Boosted base height to 0.7 for high-swell clearance
         carrierRoot.position.y = Math.sin(time * 0.5) * 0.2 + 0.7;
         carrierRoot.rotation.x = Math.sin(time * 0.3) * 0.02;     // Slight pitch
@@ -198,6 +221,26 @@ window.CarrierCommand = {
                 this.carrierHp = Math.min(this.carrierMaxHp, this.carrierHp + 1);
                 this.lastCarrierRepairTime = now;
                 console.log(`Carrier repaired: ${this.carrierHp}/${this.carrierMaxHp}`);
+            }
+        }
+
+        // 2.8 Assault Phase Automation (Scramble)
+        if (SectorManager.currentPhase === 'Assault' && !this.isScrambleTriggered) {
+            const base = RadarSystem.radarEnemies.find(e => e.id === 'base_center');
+            if (base) {
+                const dist = BABYLON.Vector3.Distance(carrierRoot.position, base.node.position);
+                // Trigger scramble at 400m
+                if (dist < 400) {
+                    console.log("COMBAT RANGE REACHED. SCRAMBLE ALL UNITS!");
+                    this.isScrambleTriggered = true;
+                    Object.keys(UnitManager.units).forEach(id => {
+                        const unit = UnitManager.units[id];
+                        if (unit.state === 'OnDeck') {
+                            // Fix: UnitManager.launchUnit(carrierRoot, targetId, unitId)
+                            UnitManager.launchUnit(carrierRoot, 'base_center', id);
+                        }
+                    });
+                }
             }
         }
 
@@ -232,7 +275,56 @@ window.CarrierCommand = {
             radarData.targetSectorName = SectorManager.targetSectorName;
         }
 
+        radarData.currentPhase = SectorManager.currentPhase;
         return radarData;
+    },
+
+    assaultBase: function () {
+        if (!carrierRoot) {
+            console.error("Assault failed: carrierRoot not found.");
+            return;
+        }
+
+        // Prevent double-clicking or re-triggering
+        if (SectorManager.currentPhase !== 'Naval') return;
+
+        // 1. Position island 500 units ahead of carrier
+        // Using getDirection is safer than .forward property
+        const forward = carrierRoot.getDirection(BABYLON.Vector3.Forward());
+        const basePos = carrierRoot.position.add(forward.scale(500));
+
+        console.log(`Assault Base Triggered! Spawning at ${basePos.x}, ${basePos.z}`);
+        RadarSystem.spawnIslandBase(basePos);
+
+        SectorManager.currentPhase = 'Assault';
+        UnitManager.seals = [];
+
+        // 2. Set Standoff Point (300 units away from base, towards carrier)
+        const toCarrier = carrierRoot.position.subtract(basePos).normalize();
+        const standoffPoint = basePos.add(toCarrier.scale(300));
+        carrierTarget = standoffPoint;
+        this.isScrambleTriggered = false;
+
+        console.log("Assault initiated. Steering to Standoff Position (300m)...");
+    },
+
+    launchCruiseMissile: function () {
+        const target = RadarSystem.radarEnemies.find(e => e.id === 'base_center');
+        if (!target) return;
+
+        // 1. Recall all units for safety/cinematics
+        Object.keys(UnitManager.units).forEach(id => UnitManager.returnUnitToBase(id));
+
+        // 2. Launch Cinematic Missile
+        CruiseMissile.launchMissile(scene, carrierRoot, target.node, () => {
+            SectorManager.currentPhase = 'Cleared';
+            console.log("CRUISE MISSILE IMPACT! Sector Clear.");
+        });
+    },
+
+    setCleared: function () {
+        // Final mission success
+        SectorManager.checkVictory(0);
     },
 
     registerUnit: function (id, node) {

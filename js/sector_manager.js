@@ -12,6 +12,7 @@ window.SectorManager = {
     isWarping: false,
     warpStartTime: 0,
     targetSectorName: "",
+    currentPhase: 'Naval', // Phases: 'Naval', 'Assault', 'Missile', 'Cleared'
 
     init: function () {
         console.log("Sector Manager Initialized");
@@ -34,6 +35,7 @@ window.SectorManager = {
         this.isWarping = true; // Pause victory checks during transit
         this.warpStartTime = Date.now();
         this.targetSectorName = sector.name;
+        this.currentPhase = 'Naval'; // Reset phase on jump
 
         if (onTransitionStart) onTransitionStart(sector);
     },
@@ -46,14 +48,17 @@ window.SectorManager = {
     },
 
     checkVictory: function (enemyCount) {
-        if (this.isWarping) return false; // Guard against premature victory during spawn
+        if (this.isWarping) return false;
 
         if (enemyCount === 0 && this.currentSectorId) {
             const sector = this.sectors.find(s => s.id === this.currentSectorId);
             if (sector && !sector.isCleared) {
-                sector.isCleared = true;
-                this.justNeutralized = true; // State flag for UI
-                return true; // Sector Neutralized!
+                // We only auto-clear if the phase is explicitly 'Cleared'
+                if (this.currentPhase === 'Cleared') {
+                    sector.isCleared = true;
+                    this.justNeutralized = true;
+                    return true;
+                }
             }
         }
         return false;
