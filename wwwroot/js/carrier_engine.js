@@ -57,6 +57,25 @@ window.CarrierCommand = {
 
             // 3. Clear existing hostiles immediately
             RadarSystem.clearEnemies();
+            if (window.UnitManager && UnitManager.clearSeals) {
+                UnitManager.clearSeals();
+            }
+
+            // 3.5 Clear any lingering combat visuals (debris, explosions, tracers)
+            if (scene) {
+                const lingeringTypes = ["debris", "explosion", "missile", "tracer"];
+                const meshesToClear = [];
+                scene.meshes.forEach(m => {
+                    if (m.name && lingeringTypes.some(t => m.name.includes(t))) {
+                        meshesToClear.push(m);
+                    }
+                });
+                meshesToClear.forEach(m => m.dispose());
+
+                if (scene.particleSystems) {
+                    scene.particleSystems.slice().forEach(ps => ps.dispose());
+                }
+            }
 
             // 4. Reset carrier position to center for immersion
             carrierRoot.position.x = 0;
@@ -275,6 +294,14 @@ window.CarrierCommand = {
             radarData.targetSectorName = SectorManager.targetSectorName;
         }
 
+        radarData.distanceToBase = 9999;
+        if (SectorManager.currentPhase === 'Approach' || SectorManager.currentPhase === 'Assault') {
+            const base = RadarSystem.radarEnemies.find(e => e.id === 'base_center');
+            if (base && carrierRoot) {
+                radarData.distanceToBase = BABYLON.Vector3.Distance(carrierRoot.position, base.node.position);
+            }
+        }
+
         radarData.currentPhase = SectorManager.currentPhase;
         return radarData;
     },
@@ -288,24 +315,60 @@ window.CarrierCommand = {
         // Prevent double-clicking or re-triggering
         if (SectorManager.currentPhase !== 'Naval') return;
 
-        // 1. Position island 500 units ahead of carrier
-        // Using getDirection is safer than .forward property
-        const forward = carrierRoot.getDirection(BABYLON.Vector3.Forward());
-        const basePos = carrierRoot.position.add(forward.scale(500));
+        console.log("Clear Scene Transition Initiated. Spawning base at center...");
 
-        console.log(`Assault Base Triggered! Spawning at ${basePos.x}, ${basePos.z}`);
+        // 1. Spawn base at the center of the map
+        const basePos = new BABYLON.Vector3(0, 0, 0);
         RadarSystem.spawnIslandBase(basePos);
 
-        SectorManager.currentPhase = 'Assault';
+        SectorManager.currentPhase = 'Approach';
         UnitManager.seals = [];
 
-        // 2. Set Standoff Point (300 units away from base, towards carrier)
-        const toCarrier = carrierRoot.position.subtract(basePos).normalize();
-        const standoffPoint = basePos.add(toCarrier.scale(300));
-        carrierTarget = standoffPoint;
+        // 2. Reposition the carrier and escorts to the edge (-1500 Z)
+        carrierRoot.position = new BABYLON.Vector3(0, 0.7, -1500);
+        carrierRoot.rotation = new BABYLON.Vector3(0, 0, 0); // Face North
+
+        if (escortRoot) {
+            escortRoot.position = new BABYLON.Vector3(0, 0.5, -1500);
+            escortRoot.rotation = new BABYLON.Vector3(0, 0, 0);
+        }
+
+        // 3. Recall all units to snap them to the deck instantly
+        Object.keys(UnitManager.units).forEach(id => UnitManager.returnUnitToBase(id));
+        if (window.UnitManager && UnitManager.clearSeals) {
+            UnitManager.clearSeals();
+        }
+
+        // 4. Update carrier destination (standoff point 400m from base)
+        carrierTarget = new BABYLON.Vector3(0, 0, -400);
         this.isScrambleTriggered = false;
 
-        console.log("Assault initiated. Steering to Standoff Position (300m)...");
+        console.log("Approach initiated. Fleet steering towards Sector Base...");
+    },
+
+    beginAssault: function () {
+        if (SectorManager.currentPhase !== 'Approach') return;
+
+        SectorManager.currentPhase = 'Assault';
+        console.log("BEGIN ASSAULT! Scrambling all units...");
+
+        // Move camera to Base Overview
+        if (typeof camera !== 'undefined' && camera) {
+            camera.lockedTarget = null;
+            camera.setTarget(BABYLON.Vector3.Zero());
+            camera.radius = 180;
+            camera.alpha = Math.PI / 4;
+            camera.beta = Math.PI / 4;
+        }
+
+        // Launch all units
+        this.isScrambleTriggered = true;
+        Object.keys(UnitManager.units).forEach(id => {
+            const unit = UnitManager.units[id];
+            if (unit.state === 'OnDeck') {
+                UnitManager.launchUnit(carrierRoot, 'base_center', id);
+            }
+        });
     },
 
     launchCruiseMissile: function () {
@@ -324,6 +387,9 @@ window.CarrierCommand = {
 
     setCleared: function () {
         // Final mission success
+        if (window.UnitManager) {
+            UnitManager.clearSeals();
+        }
         SectorManager.checkVictory(0);
     },
 

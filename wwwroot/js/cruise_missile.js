@@ -3,14 +3,50 @@ window.CruiseMissile = {
     launchMissile: function (scene, carrierRoot, targetNode, onImpact) {
         console.log("CRUISE MISSILE INBOUND!");
 
-        // 1. Create Missile Mesh
-        const missile = BABYLON.MeshBuilder.CreateCylinder("missile", { diameter: 1, height: 4 }, scene);
+        // 1. Create Missile Mesh (Detailed Voxel/Low-Poly Style)
+        const missile = new BABYLON.TransformNode("missile", scene);
         missile.position = carrierRoot.position.clone();
         missile.position.y += 10;
-        missile.rotation.x = Math.PI / 2;
-        const mat = new BABYLON.StandardMaterial("missileMat", scene);
-        mat.emissiveColor = new BABYLON.Color3(1, 1, 1);
-        missile.material = mat;
+
+        const bodyMat = new BABYLON.StandardMaterial("missileBodyMat", scene);
+        bodyMat.diffuseColor = new BABYLON.Color3(0.9, 0.9, 0.9);
+
+        const accentMat = new BABYLON.StandardMaterial("missileAccentMat", scene);
+        accentMat.diffuseColor = new BABYLON.Color3(0.8, 0.1, 0.1); // Red accent
+
+        const engineMat = new BABYLON.StandardMaterial("engineMat", scene);
+        engineMat.emissiveColor = new BABYLON.Color3(1, 0.5, 0);
+
+        // Main Body
+        const body = BABYLON.MeshBuilder.CreateCylinder("m_body", { diameter: 1.2, height: 6 }, scene);
+        body.rotation.x = Math.PI / 2;
+        body.parent = missile;
+        body.material = bodyMat;
+
+        // Nose Cone
+        const nose = BABYLON.MeshBuilder.CreateCylinder("m_nose", { diameterTop: 0, diameterBottom: 1.2, height: 2 }, scene);
+        nose.rotation.x = Math.PI / 2;
+        nose.position.z = 4;
+        nose.parent = missile;
+        nose.material = accentMat;
+
+        // Fins
+        for (let i = 0; i < 4; i++) {
+            const fin = BABYLON.MeshBuilder.CreateBox("m_fin" + i, { width: 0.1, height: 2, depth: 1.5 }, scene);
+            fin.rotation.z = (Math.PI / 2) * i;
+            fin.position.z = -2;
+            fin.position.x = Math.cos(fin.rotation.z) * 0.8;
+            fin.position.y = Math.sin(fin.rotation.z) * 0.8;
+            fin.parent = missile;
+            fin.material = accentMat;
+        }
+
+        // Exhaust
+        const exhaust = BABYLON.MeshBuilder.CreateCylinder("m_exhaust", { diameterTop: 0.8, diameterBottom: 1.0, height: 0.5 }, scene);
+        exhaust.rotation.x = Math.PI / 2;
+        exhaust.position.z = -3.25;
+        exhaust.parent = missile;
+        exhaust.material = engineMat;
 
         // 2. Setup Tracking Camera
         const missileCam = new BABYLON.FollowCamera("missileCam", missile.position, scene);
@@ -24,10 +60,12 @@ window.CruiseMissile = {
         const prevCam = scene.activeCamera;
         scene.activeCamera = missileCam;
 
-        // 3. Animate towards target
+        // 3. Orient and Animate towards target
         const targetPos = targetNode.position.clone();
+        missile.lookAt(targetPos);
+
         const dist = BABYLON.Vector3.Distance(missile.position, targetPos);
-        const duration = dist / 20; // 20 units per second
+        const duration = dist / 40; // 40 units per second (faster!)
 
         BABYLON.Animation.CreateAndStartAnimation("missile_strike", missile, "position", 30, 30 * duration, missile.position, targetPos, BABYLON.Animation.ANIMATIONLOOPMODE_CONSTANT, null, () => {
             // 4. Impact!

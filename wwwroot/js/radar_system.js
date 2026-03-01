@@ -39,6 +39,11 @@ window.RadarSystem = {
         this.radarEnemies.forEach(e => {
             if (e.node) e.node.dispose();
         });
+
+        if (window.BaseManager) {
+            window.BaseManager.clearBase();
+        }
+
         this.radarEnemies = [];
         selectedEnemyId = null;
     },
@@ -143,7 +148,7 @@ window.RadarSystem = {
         this.clearEnemies();
         const basePos = pos || new BABYLON.Vector3(0, -0.5, 0);
 
-        await BaseManager.spawnBase(this.scene, basePos, (node, id, hp, type, isStationary, isGround) => {
+        this.islandNode = await BaseManager.spawnBase(this.scene, basePos, (node, id, hp, type, isStationary, isGround) => {
             if (node.material) {
                 node.material = node.material.clone(id + "_mat");
                 node.material.albedoColor = new BABYLON.Color3(0.8, 0.1, 0.1);

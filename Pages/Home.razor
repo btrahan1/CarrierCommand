@@ -28,6 +28,10 @@
         {
             <button class="btn-assault" @onclick="AssaultBase">ASSAULT BASE</button>
         }
+        else if (currentPhase == "Approach" && distanceToBase <= 600)
+        {
+            <button class="btn-assault" style="background: linear-gradient(45deg, #ff8800, #ff0000);" @onclick="BeginAssault">BEGIN ASSAULT</button>
+        }
         else if (currentPhase == "Assault" && activeThreatCount == 0)
         {
             <button class="btn-missile" @onclick="LaunchMissile">LAUNCH CRUISE MISSILE</button>
@@ -411,6 +415,7 @@
     private string currentPhase = "Naval";
     private int radarEnemiesCount = 0;
     private int activeThreatCount = 0;
+    private double distanceToBase = 9999;
     private bool isWarping = false;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -489,6 +494,7 @@
                 currentPhase = data.CurrentPhase ?? "Naval";
                 radarEnemiesCount = data.Enemies?.Count ?? 0;
                 activeThreatCount = data.ActiveThreatCount;
+                distanceToBase = data.DistanceToBase;
                 isWarping = data.IsWarping;
 
                 if (data.IsSectorNeutralized) {
@@ -519,6 +525,11 @@
     private async Task AssaultBase()
     {
         await JSRuntime.InvokeVoidAsync("CarrierCommand.assaultBase");
+    }
+
+    private async Task BeginAssault()
+    {
+        await JSRuntime.InvokeVoidAsync("CarrierCommand.beginAssault");
     }
 
     private async Task LaunchMissile()

@@ -304,6 +304,15 @@ window.UnitManager = {
         }
     },
 
+    clearSeals: function () {
+        this.seals.forEach(s => {
+            if (s.node && !s.node.isDisposed()) {
+                s.node.dispose();
+            }
+        });
+        this.seals = [];
+    },
+
     crumble: function (scene, enemy) {
         const node = enemy.node;
         if (!node) return;

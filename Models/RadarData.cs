@@ -30,4 +30,6 @@ public class RadarData
     public bool IsWarping { get; set; }
     [JsonPropertyName("activeThreatCount")]
     public int ActiveThreatCount { get; set; }
+    [JsonPropertyName("distanceToBase")]
+    public double DistanceToBase { get; set; }
 }
