@@ -30,6 +30,7 @@ window.DefenseSystem = {
             let minDist = this.defenseRange;
 
             radarEnemies.forEach(e => {
+                if (e.hp <= 0) return; // Ignore destroyed enemies
                 const dist = BABYLON.Vector3.Distance(t.node.absolutePosition, e.node.position);
                 if (dist < minDist) {
                     minDist = dist;
@@ -76,11 +77,10 @@ window.DefenseSystem = {
         setTimeout(() => ray.dispose(), 100);
 
         // Deal damage
-        enemy.hp -= 1; // 1 damage to match other units
+        enemy.hp -= 1;
         if (enemy.hp <= 0) {
-            // Destruction logic is handled in UnitManager.updateUnits for now, 
-            // but we should probably centralize it or ensure it's checked here too.
-            // For now, it will be caught in the next unit update loop.
+            // Target destroyed, turret will reset in the next update loop
+            // as it won't be in the radarEnemies list anymore
         } else {
             const hpPct = enemy.hp / enemy.maxHp;
             enemy.healthBar.scaling.x = hpPct;

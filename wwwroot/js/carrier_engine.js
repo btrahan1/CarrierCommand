@@ -129,6 +129,13 @@ window.CarrierCommand = {
             }
         }
 
+        // Apply Buoyancy/Bobbing to Carrier
+        const time = Date.now() * 0.001;
+        // Boosted base height to 0.7 for high-swell clearance
+        carrierRoot.position.y = Math.sin(time * 0.5) * 0.2 + 0.7;
+        carrierRoot.rotation.x = Math.sin(time * 0.3) * 0.02;     // Slight pitch
+        carrierRoot.rotation.z = Math.cos(time * 0.4) * 0.01;     // Slight roll
+
         // 2. Update Units
         UnitManager.updateUnits(scene, carrierRoot, RadarSystem.radarEnemies, RadarSystem.getSelectedEnemyId(), (id) => this.selectEnemy(id));
 
