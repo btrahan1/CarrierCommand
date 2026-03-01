@@ -144,8 +144,12 @@ window.UnitManager = {
                 const targetPos = BABYLON.Vector3.TransformCoordinates(unit.startPos, carrierRoot.getWorldMatrix());
                 const dir = targetPos.subtract(node.position);
                 const dist = dir.length();
-                if (dist > 0.5) {
-                    node.position.addInPlace(dir.scale(0.05));
+
+                // If close, use a stronger capture factor to handle carrier movement
+                const lerpFactor = dist < 5.0 ? 0.15 : 0.05;
+
+                if (dist > 1.2) {
+                    node.position.addInPlace(dir.scale(lerpFactor));
                     if (isVessel) node.position.y = bobbing;
                     const targetRot = Math.atan2(dir.x, dir.z);
                     node.rotation.y = targetRot;

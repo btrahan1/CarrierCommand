@@ -1,0 +1,174 @@
+
+@using CarrierCommand.Models
+
+<div class="sector-map-overlay">
+    <div class="map-header">
+        <h2>STRATEGIC SECTOR MAP</h2>
+        <button class="close-btn" @onclick="OnClose">CLOSE [X]</button>
+    </div>
+
+    <div class="map-grid">
+        @foreach (var sector in Status.Sectors)
+        {
+            <div class="sector-node @(sector.Id == Status.CurrentId ? "current" : "") @(sector.IsCleared ? "cleared" : "")"
+                 style="left: @(sector.X)px; top: @(sector.Y)px;"
+                 @onclick="() => SelectSector(sector.Id)">
+                <div class="node-icon"></div>
+                <div class="node-label">
+                    <span class="sector-name">@sector.Name</span>
+                    <span class="sector-intel">Diff: @sector.Difficulty</span>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="map-footer">
+        @if (selectedId != null && selectedId != Status.CurrentId)
+        {
+            var sel = Status.Sectors.FirstOrDefault(s => s.Id == selectedId);
+            <div class="warp-confirm">
+                <span>ENGAGE WARP TO @sel?.Name.ToUpper()?</span>
+                <button class="warp-btn" @onclick="() => OnWarp.InvokeAsync(selectedId)">EXECUTE WARP JUMP</button>
+            </div>
+        }
+    </div>
+</div>
+
+<style>
+    .sector-map-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 20, 10, 0.9);
+        display: flex;
+        flex-direction: column;
+        z-index: 2000;
+        color: #0f0;
+        font-family: 'Courier New', Courier, monospace;
+        backdrop-filter: blur(8px);
+        pointer-events: auto;
+    }
+
+    .map-header {
+        padding: 20px;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 2px solid #0f0;
+        background: rgba(0, 40, 20, 0.5);
+    }
+
+    .close-btn {
+        background: transparent;
+        border: 1px solid #0f0;
+        color: #0f0;
+        padding: 5px 15px;
+        cursor: pointer;
+    }
+
+    .close-btn:hover { background: #0f0; color: #000; }
+
+    .map-grid {
+        flex: 1;
+        position: relative;
+        overflow: auto;
+        background-image: 
+            linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px);
+        background-size: 100px 100px;
+    }
+
+    .sector-node {
+        position: absolute;
+        width: 120px;
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    .node-icon {
+        width: 16px;
+        height: 16px;
+        border: 2px solid #f00; /* Default Hostile Red */
+        background: #000;
+        transform: rotate(45deg);
+        box-shadow: 0 0 10px #f00;
+    }
+
+    .sector-node.current .node-icon {
+        background: #00aaff;
+        border-color: #fff;
+        box-shadow: 0 0 20px #00aaff;
+        animation: pulse-current 2s infinite;
+    }
+
+    .sector-node.cleared .node-icon {
+        background: #0f0;
+        border-color: #fff;
+        box-shadow: 0 0 20px #0f0;
+    }
+
+    .sector-node:hover { transform: scale(1.2); }
+
+    .node-label {
+        margin-top: 10px;
+        text-align: center;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 5px;
+        border: 1px solid rgba(255, 0, 0, 0.3); /* Hostile border */
+        font-size: 12px;
+    }
+    
+    .sector-node.cleared .node-label {
+        border-color: rgba(0, 255, 0, 0.3);
+    }
+
+    .sector-name { display: block; font-weight: bold; }
+    .sector-intel { display: block; color: #8f8; font-size: 10px; }
+
+    .map-footer {
+        padding: 40px;
+        background: rgba(0, 40, 20, 0.5);
+        border-top: 2px solid #0f0;
+        display: flex;
+        justify-content: center;
+    }
+
+    .warp-btn {
+        background: #f00;
+        color: #fff;
+        border: none;
+        padding: 10px 30px;
+        margin-left: 20px;
+        font-weight: bold;
+        cursor: pointer;
+        box-shadow: 0 0 20px #f00;
+        animation: pulse-warp 1s infinite alternate;
+    }
+
+    @@keyframes pulse-current {
+        0% { transform: rotate(45deg) scale(1); }
+        50% { transform: rotate(45deg) scale(1.3); }
+        100% { transform: rotate(45deg) scale(1); }
+    }
+
+    @@keyframes pulse-warp {
+        from { transform: scale(1); box-shadow: 0 0 20px #f00; }
+        to { transform: scale(1.05); box-shadow: 0 0 40px #f00; }
+    }
+</style>
+
+@code {
+    [Parameter] public SectorStatus Status { get; set; } = new();
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback<string> OnWarp { get; set; }
+
+    private string selectedId = null;
+
+    private void SelectSector(string id) {
+        selectedId = id;
+    }
+}
