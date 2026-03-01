@@ -25,7 +25,50 @@ window.CarrierCommand = {
             }
         };
 
+        SectorManager.init();
+
+        // Initial enemy spawn for starting sector
+        const startSector = SectorManager.sectors.find(s => s.id === SectorManager.currentSectorId);
+        if (startSector) {
+            this.initRadar("radarUI").then(() => {
+                RadarSystem.spawnSectorEnemies(startSector.difficulty);
+            });
+        }
+
         console.log("Carrier Command Orchestrator Initialized");
+    },
+
+    getSectorData: function () {
+        return SectorManager.getSectorStatus();
+    },
+
+    jumpToSector: function (id) {
+        SectorManager.jumpToSector(id, async (sector) => {
+            // 1. Warp visual/state reset
+            console.log(`Initiating Sailing Sequence to ${sector.name}...`);
+
+            // 2. Recall all units (safety)
+            Object.keys(UnitManager.units).forEach(uid => UnitManager.returnUnitToBase(uid));
+
+            // 3. Clear existing hostiles immediately
+            RadarSystem.clearEnemies();
+
+            // 4. Reset carrier position to center for immersion
+            carrierRoot.position.x = 0;
+            carrierRoot.position.z = 0;
+            carrierTarget = null;
+
+            // 5. Simulate 10s "Sailing" transition
+            await new Promise(resolve => setTimeout(resolve, 10000));
+
+            // 6. Spawn new hostiles
+            await RadarSystem.spawnSectorEnemies(sector.difficulty);
+
+            // 7. Signal Warp Complete
+            SectorManager.setWarpComplete();
+
+            console.log("Arrival at destination. New contacts detected.");
+        });
     },
 
     // Helper to safely add meshes to the water reflection list
@@ -144,6 +187,9 @@ window.CarrierCommand = {
 
         // 3. Update Visibility
         RadarSystem.updateVisibility(carrierRoot);
+
+        // 4. Check for victory
+        SectorManager.checkVictory(RadarSystem.radarEnemies.length);
     },
 
     getRadarData: function () {
@@ -153,6 +199,19 @@ window.CarrierCommand = {
             state: UnitManager.units[id].state
         }));
         radarData.isGunsEngaged = DefenseSystem.isEngaged;
+
+        // Pass the alert flag to UI and clear it
+        radarData.isSectorNeutralized = SectorManager.justNeutralized;
+        SectorManager.justNeutralized = false;
+
+        // Warp Timing for Progress Bar
+        radarData.warpTimeRemaining = 0;
+        if (SectorManager.isWarping && SectorManager.warpStartTime > 0) {
+            const elapsed = (Date.now() - SectorManager.warpStartTime) / 1000;
+            radarData.warpTimeRemaining = Math.max(0, 10 - elapsed);
+            radarData.targetSectorName = SectorManager.targetSectorName;
+        }
+
         return radarData;
     },
 

@@ -18,14 +18,37 @@ window.RadarSystem = {
             });
         }
 
-        // Generate mock enemies
-        for (let i = 0; i < 5; i++) {
+        this.scene = scene;
+        this.loadModel = loadModel;
+
+        targetReticle = BABYLON.MeshBuilder.CreateTorus("reticle", { thickness: 0.1, diameter: 4 }, scene);
+        targetReticle.material = new BABYLON.StandardMaterial("reticleMat", scene);
+        targetReticle.material.emissiveColor = new BABYLON.Color3(1, 0, 0);
+        targetReticle.setEnabled(false);
+    },
+
+    clearEnemies: function () {
+        if (targetReticle) {
+            targetReticle.parent = null;
+            targetReticle.setEnabled(false);
+        }
+        this.radarEnemies.forEach(e => {
+            if (e.node) e.node.dispose();
+        });
+        this.radarEnemies = [];
+        selectedEnemyId = null;
+    },
+
+    spawnSectorEnemies: async function (count) {
+        this.clearEnemies();
+
+        for (let i = 0; i < count; i++) {
             const angle = Math.random() * Math.PI * 2;
             const dist = 300 + Math.random() * 200;
             const posX = Math.cos(angle) * dist;
             const posZ = Math.sin(angle) * dist;
 
-            const enemy = await loadModel("data/combat_vessel.json", [posX, 0, posZ], [0, Math.random() * 360, 0], [1, 1, 1]);
+            const enemy = await this.loadModel("data/combat_vessel.json", [posX, 0, posZ], [0, Math.random() * 360, 0], [1, 1, 1]);
 
             enemy.getChildMeshes().forEach(m => {
                 m.isPickable = true;
@@ -36,11 +59,11 @@ window.RadarSystem = {
                 }
             });
 
-            const hb = BABYLON.MeshBuilder.CreatePlane("hb", { width: 4, height: 0.5 }, scene);
+            const hb = BABYLON.MeshBuilder.CreatePlane("hb", { width: 4, height: 0.5 }, this.scene);
             hb.parent = enemy;
             hb.position = new BABYLON.Vector3(0, 8, 0);
             hb.billboardMode = BABYLON.Mesh.BILLBOARDMODE_ALL;
-            const hbMat = new BABYLON.StandardMaterial("hbMat", scene);
+            const hbMat = new BABYLON.StandardMaterial("hbMat", this.scene);
             hbMat.emissiveColor = new BABYLON.Color3(0, 1, 0);
             hb.material = hbMat;
 
@@ -55,11 +78,6 @@ window.RadarSystem = {
                 id: i
             });
         }
-
-        targetReticle = BABYLON.MeshBuilder.CreateTorus("reticle", { thickness: 0.1, diameter: 4 }, scene);
-        targetReticle.material = new BABYLON.StandardMaterial("reticleMat", scene);
-        targetReticle.material.emissiveColor = new BABYLON.Color3(1, 0, 0);
-        targetReticle.setEnabled(false);
     },
 
     selectEnemy: function (id) {
@@ -79,10 +97,22 @@ window.RadarSystem = {
     getSelectedEnemyId: function () { return selectedEnemyId; },
 
     updateVisibility: function (carrierRoot) {
-        this.radarEnemies.forEach(e => {
+        const time = Date.now() * 0.001;
+        this.radarEnemies.forEach((e, idx) => {
+            if (!e.node) return;
+
+            // 1. Visibility Check
             const dist = BABYLON.Vector3.Distance(carrierRoot.position, e.node.position);
             e.node.setEnabled(dist < this.radarRange);
             if (dist > 1000) e.node.setEnabled(false);
+
+            // 2. Buoyancy & Bobbing (Apply to enabled nodes)
+            if (e.node.isEnabled()) {
+                const seed = idx * 0.5;
+                e.node.position.y = Math.sin(time * 0.7 + seed) * 0.15 + 0.5;
+                e.node.rotation.x = Math.sin(time * 0.5 + seed) * 0.03; // Slight pitch
+                e.node.rotation.z = Math.cos(time * 0.4 + seed) * 0.02; // Slight roll
+            }
         });
     },
 
@@ -108,13 +138,29 @@ window.RadarSystem = {
             sweepAngle: this.radarSweepAngle,
             heading: carrierRoot.rotation.y,
             selectedId: selectedEnemyId,
-            enemies: this.radarEnemies.filter(e => e.lastSeen > 0).map(e => ({
-                id: e.id,
-                x: (e.x - cp.x) / this.radarRange,
-                y: -(e.z - cp.z) / this.radarRange,
-                opacity: e.lastSeen,
-                isSelected: e.id === selectedEnemyId
-            }))
+            enemies: this.radarEnemies.filter(e => e.lastSeen > 0).map(e => {
+                const relX = (e.x - cp.x) / this.radarRange;
+                const relZ = -(e.z - cp.z) / this.radarRange;
+                const dist = Math.sqrt(relX * relX + relZ * relZ);
+                const isOffRadar = dist > 1.0;
+
+                // Clamp to edge for off-radar indicators
+                let dispX = relX;
+                let dispZ = relZ;
+                if (isOffRadar) {
+                    dispX /= dist;
+                    dispZ /= dist;
+                }
+
+                return {
+                    id: e.id,
+                    x: dispX,
+                    y: dispZ,
+                    opacity: isOffRadar ? 1.0 : e.lastSeen,
+                    isSelected: e.id === selectedEnemyId,
+                    isOffRadar: isOffRadar
+                };
+            })
         };
     }
 };
