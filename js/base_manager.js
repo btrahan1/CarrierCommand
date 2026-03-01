@@ -1,6 +1,10 @@
 
 window.BaseManager = {
+    spawnedElements: [],
+
     spawnBase: async function (scene, pos, onEnemyAdded) {
+        this.clearBase(); // Ensure we don't leak elements if called multiple times
+
         console.log(`BaseManager: Generating Strategic Outpost at ${pos.x}, ${pos.z}...`);
 
         // 1. Create Island Mesh (A bit more jagged/natural)
@@ -12,13 +16,15 @@ window.BaseManager = {
         }, scene);
 
         island.position = pos.clone();
-        island.position.y = -1.0;
+        island.position.y = pos.y - 0.5; // Top surface will be at pos.y + 1.0
 
         const islandMat = new BABYLON.StandardMaterial("islandMat", scene);
         islandMat.diffuseColor = new BABYLON.Color3(0.25, 0.45, 0.25);
         islandMat.specularColor = new BABYLON.Color3(0, 0, 0);
         island.material = islandMat;
         island.isPickable = false;
+
+        this.spawnedElements.push(island);
 
         // Add to water reflections
         if (window.CarrierCommand && window.CarrierCommand._addToWater) {
@@ -27,6 +33,7 @@ window.BaseManager = {
 
         // 2. Main Command Center (More detailed)
         const cc = this._createCommandCenter(scene, pos.clone().add(new BABYLON.Vector3(0, 5, 0)), onEnemyAdded);
+        this.spawnedElements.push(cc);
 
         // 3. Defensive Towers (Perimeter)
         const towerPositions = [
@@ -38,13 +45,14 @@ window.BaseManager = {
 
         towerPositions.forEach((offset, i) => {
             const towerPos = pos.clone().add(offset);
-            this._createTower(scene, `tower_${i}`, towerPos, onEnemyAdded);
+            const tower = this._createTower(scene, `tower_${i}`, towerPos, onEnemyAdded);
+            this.spawnedElements.push(tower);
         });
 
         // 4. Secondary Buildings (Visual Flavor)
-        this._createHangar(scene, pos.clone().add(new BABYLON.Vector3(-15, 2, -15)));
-        this._createHangar(scene, pos.clone().add(new BABYLON.Vector3(15, 2, -15)));
-        this._createFuelTanks(scene, pos.clone().add(new BABYLON.Vector3(0, 2, 25)));
+        this._createHangar(scene, pos.clone().add(new BABYLON.Vector3(-15, 3, -15)));
+        this._createHangar(scene, pos.clone().add(new BABYLON.Vector3(15, 3, -15)));
+        this._createFuelTanks(scene, pos.clone().add(new BABYLON.Vector3(0, 4, 25)));
 
         // 5. Enemy Troops
         for (let i = 0; i < 15; i++) {
@@ -52,10 +60,20 @@ window.BaseManager = {
             const dist = 15 + Math.random() * 30;
             const gx = pos.x + Math.cos(angle) * dist;
             const gz = pos.z + Math.sin(angle) * dist;
-            this._createTroop(scene, `troop_${i}`, new BABYLON.Vector3(gx, 1, gz), onEnemyAdded);
+            const troop = this._createTroop(scene, `troop_${i}`, new BABYLON.Vector3(gx, pos.y + 1.0, gz), onEnemyAdded);
+            this.spawnedElements.push(troop);
         }
 
         return island;
+    },
+
+    clearBase: function () {
+        this.spawnedElements.forEach(mesh => {
+            if (mesh && !mesh.isDisposed()) {
+                mesh.dispose();
+            }
+        });
+        this.spawnedElements = [];
     },
 
     _createCommandCenter: function (scene, pos, onEnemyAdded) {
@@ -86,7 +104,7 @@ window.BaseManager = {
     _createTower: function (scene, id, pos, onEnemyAdded) {
         const group = new BABYLON.TransformNode(id + "_group", scene);
         group.position = pos;
-        group.position.y = 5.5; // Offset from island surface
+        group.position.y = pos.y + 7.0; // Offset from island surface (Surface 1.0 + HalfHeight 6.0)
 
         const body = BABYLON.MeshBuilder.CreateCylinder(id + "_body", { diameter: 4, height: 12 }, scene);
         body.parent = group;
@@ -108,14 +126,16 @@ window.BaseManager = {
         hangar.position = pos;
         hangar.material = this._getBuildingMat(scene, new BABYLON.Color3(0.35, 0.35, 0.4));
         if (window.CarrierCommand?._addToWater) window.CarrierCommand._addToWater(hangar);
+        this.spawnedElements.push(hangar);
     },
 
     _createFuelTanks: function (scene, pos) {
         for (let i = 0; i < 3; i++) {
             const tank = BABYLON.MeshBuilder.CreateCylinder("tank_" + i, { diameter: 4, height: 6 }, scene);
-            tank.position = pos.clone().add(new BABYLON.Vector3((i - 1) * 6, 1, 0));
+            tank.position = pos.clone().add(new BABYLON.Vector3((i - 1) * 6, 0, 0));
             tank.material = this._getBuildingMat(scene, new BABYLON.Color3(0.4, 0.1, 0.1));
             if (window.CarrierCommand?._addToWater) window.CarrierCommand._addToWater(tank);
+            this.spawnedElements.push(tank);
         }
     },
 
@@ -140,6 +160,8 @@ window.BaseManager = {
 
         body.metadata = { enemyId: id };
         onEnemyAdded(body, id, 10, 'troop', false, true);
+
+        return group;
     },
 
     _getBuildingMat: function (scene, color) {

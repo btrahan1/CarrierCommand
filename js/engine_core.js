@@ -15,9 +15,10 @@ window.EngineCore = {
         camera.attachControl(canvas, true);
         camera.lowerRadiusLimit = 5;
         camera.upperRadiusLimit = 200;
+        camera.maxZ = 15000;
 
-        // Skybox - Simplified to avoid texture errors
-        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 1000.0 }, scene);
+        // Skybox - Expanded to support approach phase
+        const skybox = BABYLON.MeshBuilder.CreateBox("skyBox", { size: 10000.0 }, scene);
         const skyboxMaterial = new BABYLON.StandardMaterial("skyBox", scene);
         skyboxMaterial.backFaceCulling = false;
         skyboxMaterial.disableLighting = true;
@@ -46,8 +47,8 @@ window.EngineCore = {
         shadowGenerator.useBlurExponentialShadowMap = true;
         shadowGenerator.blurKernel = 32;
 
-        // Ocean with WaterMaterial
-        const ocean = BABYLON.MeshBuilder.CreateGround("ocean", { width: 1000, height: 1000 }, scene);
+        // Ocean with WaterMaterial - Expanded bounds
+        const ocean = BABYLON.MeshBuilder.CreateGround("ocean", { width: 10000, height: 10000 }, scene);
         const water = new BABYLON.WaterMaterial("water", scene, new BABYLON.Vector2(512, 512));
         water.bumpTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/waterbump.png", scene); // Standard water bump
 
