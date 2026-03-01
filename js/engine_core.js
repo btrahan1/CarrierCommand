@@ -52,7 +52,7 @@ window.EngineCore = {
         water.bumpTexture = new BABYLON.Texture("https://www.babylonjs-playground.com/textures/waterbump.png", scene); // Standard water bump
 
         water.windForce = -10;
-        water.waveHeight = 0.5;
+        water.waveHeight = 0.2; // Lowered for model scale stability
         water.bumpHeight = 0.1;
         water.waveLength = 0.1;
         water.colorBlendFactor = 0.5;

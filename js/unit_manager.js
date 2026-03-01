@@ -76,6 +76,10 @@ window.UnitManager = {
             const node = unit.node;
             const isVessel = id.includes('vessel');
 
+            const time = now * 0.001;
+            // Boosted base height to 0.5 for high-swell clearance
+            const bobbing = isVessel ? Math.sin(time * 0.7 + (id.charCodeAt(0) * 0.1)) * 0.15 + 0.5 : 0;
+
             if (unit.state === 'Circling') {
                 const radius = isVessel ? 45 : 25;
                 const speed = isVessel ? 0.005 : 0.01;
@@ -84,8 +88,9 @@ window.UnitManager = {
                 const targetPos = carrierRoot.position;
                 node.position.x = targetPos.x + Math.cos(unit.orbitAngle) * radius;
                 node.position.z = targetPos.z + Math.sin(unit.orbitAngle) * radius;
-                node.position.y = isVessel ? 0 : 10;
+                node.position.y = isVessel ? bobbing : 10;
                 node.rotation.y = -unit.orbitAngle;
+                if (isVessel) node.rotation.x = Math.sin(time * 0.5) * 0.05; // Vessel pitch
             }
             else if (unit.state === 'Attacking' && unit.targetId !== null) {
                 const enemy = radarEnemies.find(e => e.id === unit.targetId);
@@ -101,8 +106,9 @@ window.UnitManager = {
                 const targetPos = enemy.node.position;
                 node.position.x = targetPos.x + Math.cos(unit.orbitAngle) * radius;
                 node.position.z = targetPos.z + Math.sin(unit.orbitAngle) * radius;
-                node.position.y = isVessel ? 0 : 12;
+                node.position.y = isVessel ? bobbing : 12;
                 node.rotation.y = -unit.orbitAngle;
+                if (isVessel) node.rotation.x = Math.sin(time * 0.6) * 0.05; // Aggressive pitch
 
                 if (now - unit.lastFireTime > 3000) {
                     enemy.hp -= 1;
@@ -124,7 +130,7 @@ window.UnitManager = {
                         Object.values(this.units).forEach(u => {
                             if (u.targetId === enemy.id) {
                                 u.targetId = null;
-                                u.state = 'Circling';
+                                u.state = 'Returning'; // Automatic return on target destruction
                             }
                         });
                     } else {
@@ -140,7 +146,7 @@ window.UnitManager = {
                 const dist = dir.length();
                 if (dist > 0.5) {
                     node.position.addInPlace(dir.scale(0.05));
-                    if (isVessel) node.position.y = 0;
+                    if (isVessel) node.position.y = bobbing;
                     const targetRot = Math.atan2(dir.x, dir.z);
                     node.rotation.y = targetRot;
                 } else {
