@@ -62,6 +62,9 @@ window.UnitManager = {
             if (unit.state === 'Launching') {
                 if (targetId !== null) {
                     this.assignUnitToTarget(unitId, targetId);
+                } else if (window.SectorManager && window.SectorManager.currentPhase === 'Assault') {
+                    unit.state = 'Assault';
+                    console.log(`Unit ${unitId} joining active assault.`);
                 } else {
                     unit.state = 'Circling';
                     unit.orbitAngle = Math.atan2(node.position.z - carrierRoot.position.z, node.position.x - carrierRoot.position.x);
@@ -87,13 +90,30 @@ window.UnitManager = {
             if (unit.state === 'OnDeck') {
                 // Auto-Repair Logic: 1 HP per 3 seconds (3000ms)
                 if (unit.hp < unit.maxHp) {
-                    if (now - unit.lastRepairTime > 3000) {
-                        unit.hp = Math.min(unit.maxHp, unit.hp + 1);
+                    if (now - unit.lastRepairTime > 1500) { // Slightly faster repair for snappier relaunch
+                        unit.hp = Math.min(unit.maxHp, unit.hp + 1.0);
                         unit.lastRepairTime = now;
-                        console.log(`Unit ${id} repaired: ${unit.hp}/${unit.maxHp}`);
+                    }
+                } else {
+                    // Auto-Relaunch if in Assault phase
+                    if (window.SectorManager && window.SectorManager.currentPhase === 'Assault') {
+                        // Avoid immediate relaunch if we just landed
+                        if (now - unit.lastRepairTime > 2000) {
+                            console.log(`Unit ${id} fully repaired, relaunching to join assault.`);
+                            this.launchUnit(carrierRoot, null, id);
+                        }
                     }
                 }
                 return; // Skip further updates for units on deck
+            }
+
+            // Auto-Retreat Logic
+            if (unit.state === 'Attacking' || unit.state === 'Assault' || unit.state === 'Circling') {
+                if (unit.hp < unit.maxHp * 0.5) {
+                    console.log(`Unit ${id} damaged below 50% health, retreating for repairs.`);
+                    this.returnUnitToBase(id);
+                    return;
+                }
             }
 
             const isVessel = id.includes('vessel');
@@ -186,6 +206,7 @@ window.UnitManager = {
                     node.rotation = unit.startRot.clone();
                     unit.state = 'OnDeck';
                     unit.targetId = null;
+                    unit.lastRepairTime = Date.now(); // Reset to ensure auto-relaunch delay works
                 }
             }
             else if (unit.state === 'Assault') {
@@ -311,6 +332,10 @@ window.UnitManager = {
             }
         });
         this.seals = [];
+        // Reset disembarkment flags for next sector
+        Object.keys(this.units).forEach(id => {
+            this.units[id].hasDisembarked = false;
+        });
     },
 
     crumble: function (scene, enemy) {
