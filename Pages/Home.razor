@@ -44,6 +44,9 @@
             <LaunchMenu UnitStates="unitStates" />
             
             <div class="defense-controls">
+                <button class="btn-autoplay @(isAutoPlay ? "active" : "")" @onclick="ToggleAutoPlay">
+                    AUTOPLAY: @(isAutoPlay ? "ON" : "OFF")
+                </button>
                 <button class="btn-engage @(isGunsEngaged ? "engaged" : "")" @onclick="ToggleGuns">
                     @(isGunsEngaged ? "Guns Engaged" : "Engage Guns")
                 </button>
@@ -397,6 +400,37 @@
         70% { box-shadow: 0 0 0 15px rgba(255, 68, 68, 0); }
         100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
     }
+
+    .btn-autoplay {
+        background: rgba(255, 255, 255, 0.1);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        color: white;
+        padding: 15px 30px;
+        font-size: 1.2rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.3s;
+        border-radius: 4px;
+        width: 100%;
+        backdrop-filter: blur(5px);
+        margin-bottom: 15px;
+        pointer-events: auto;
+    }
+
+    .btn-autoplay.active {
+        background: rgba(0, 255, 136, 0.2);
+        border-color: #00ff88;
+        color: #00ff88;
+        box-shadow: 0 0 15px rgba(0, 255, 136, 0.3);
+        animation: pulse-autoplay 1.5s infinite;
+    }
+
+    @@keyframes pulse-autoplay {
+        0% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0.4); }
+        70% { box-shadow: 0 0 0 10px rgba(0, 255, 136, 0); }
+        100% { box-shadow: 0 0 0 0 rgba(0, 255, 136, 0); }
+    }
 </style>
 
 @code {
@@ -417,6 +451,9 @@
     private int activeThreatCount = 0;
     private double distanceToBase = 9999;
     private bool isWarping = false;
+    private bool isAutoPlay = false;
+    private bool isMissileEnRoute = false;
+    private DateTime lastAutoAction = DateTime.MinValue;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -501,6 +538,11 @@
                     showNeutralizedAlert = true;
                 }
 
+                if (isAutoPlay && (DateTime.Now - lastAutoAction).TotalSeconds > 1.2)
+                {
+                    await RunAutoPlayLogic();
+                }
+
                 StateHasChanged();
             } catch { }
             await Task.Delay(30);
@@ -519,6 +561,7 @@
     private async Task HandleWarp(string sectorId)
     {
         showSectorMap = false;
+        isMissileEnRoute = false;
         await JSRuntime.InvokeVoidAsync("CarrierCommand.jumpToSector", sectorId);
     }
 
@@ -534,11 +577,114 @@
 
     private async Task LaunchMissile()
     {
+        isMissileEnRoute = true;
         await JSRuntime.InvokeVoidAsync("CarrierCommand.launchCruiseMissile");
     }
 
     private async Task SetCleared()
     {
+        isMissileEnRoute = false;
         await JSRuntime.InvokeVoidAsync("CarrierCommand.setCleared");
+    }
+
+    private async Task ToggleAutoPlay()
+    {
+        isAutoPlay = !isAutoPlay;
+    }
+
+    private async Task RunAutoPlayLogic()
+    {
+        // 1. Naval Surgical Strike Logic
+        if (currentPhase == "Naval" && !isWarping)
+        {
+            var fleetEnemies = radarBlips.Where(b => b.Type == "vessel").ToList();
+            if (fleetEnemies.Any())
+            {
+                bool allOnDeck = unitStates.All(u => u.State == "OnDeck");
+                bool allRepaired = unitStates.All(u => u.Hp >= u.MaxHp);
+
+                if (allOnDeck)
+                {
+                    if (allRepaired)
+                    {
+                        // Ready for next strike
+                        var target = fleetEnemies.First();
+                        await JSRuntime.InvokeVoidAsync("CarrierCommand.selectEnemy", target.Id);
+                        foreach (var unit in unitStates)
+                        {
+                            await JSRuntime.InvokeVoidAsync("CarrierCommand.launchUnit", unit.Id);
+                        }
+                        lastAutoAction = DateTime.Now;
+                    }
+                    // Else: Waiting for repairs
+                }
+                // Else: Units are currently out attacking or returning
+                return; 
+            }
+
+            // No fleet enemies left, proceed to assault if units are ready
+            if (activeThreatCount == 0 && unitStates.All(u => u.State == "OnDeck" && u.Hp >= u.MaxHp))
+            {
+                await AssaultBase();
+                lastAutoAction = DateTime.Now;
+                return;
+            }
+        }
+        
+        // 2. Approach Phase Transition
+        if (currentPhase == "Approach" && distanceToBase <= 600)
+        {
+            await BeginAssault();
+            lastAutoAction = DateTime.Now;
+            return;
+        }
+
+        // 3. Combat Actions
+        if (currentPhase == "Assault")
+        {
+            if (activeThreatCount > 0)
+            {
+                // Toggle guns if needed
+                if (!isGunsEngaged)
+                {
+                    await ToggleGuns();
+                    lastAutoAction = DateTime.Now;
+                    return;
+                }
+
+                // Launch units if idle
+                var idleUnit = unitStates.FirstOrDefault(u => u.State == "OnDeck");
+                if (idleUnit != null)
+                {
+                    // Select a target first if none selected
+                    var target = radarBlips.FirstOrDefault(b => b.Type == "Enemy" || b.Type == "Base" || b.Type == "Turret");
+                    if (target != null)
+                    {
+                        await JSRuntime.InvokeVoidAsync("CarrierCommand.selectEnemy", target.Id);
+                    }
+                    await JSRuntime.InvokeVoidAsync("CarrierCommand.launchUnit", idleUnit.Id);
+                    lastAutoAction = DateTime.Now;
+                    return;
+                }
+            }
+            else
+            {
+                // No threats left, fire missile
+                if (!isMissileEnRoute)
+                {
+                    await LaunchMissile();
+                    lastAutoAction = DateTime.Now;
+                }
+                return;
+            }
+        }
+
+        // 4. Mission Success
+        if (currentPhase == "Missile" || currentPhase == "Cleared")
+        {
+            await SetCleared();
+            lastAutoAction = DateTime.Now;
+            return;
+        }
     }
 }
